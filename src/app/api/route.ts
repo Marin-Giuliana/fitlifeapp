@@ -6,7 +6,8 @@ export async function GET(){
     await dbConnect();
     return new Response(JSON.stringify({result: "Hello world"}));
     } catch (error){
-        return new Response(JSON.stringify({result: "Error"}));
+        if(error)
+            return new Response(JSON.stringify({result: "Error"}));
     }
 }
 

@@ -38,7 +38,7 @@ export default function LoginPage() {
       router.push("/dashboard/member");
       router.refresh();
     } catch (error) {
-      setError("An unexpected error occurred");
+      setError("An unexpected error occurred: " + error);
       setIsLoading(false);
     }
   };
@@ -82,16 +82,10 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {error && (
-            <div className="text-red-500 text-sm mt-2">{error}</div>
-          )}
+          {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
 
           <div>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign in"}
             </Button>
           </div>
@@ -99,7 +93,7 @@ export default function LoginPage() {
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               href="/register"
               className="font-medium text-blue-600 hover:text-blue-500"

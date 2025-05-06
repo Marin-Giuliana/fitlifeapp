@@ -1,7 +1,6 @@
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { UserNav } from "@/components/user-nav"
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { UserNav } from "@/components/user-nav";
 
 export function SiteHeader() {
   return (
@@ -18,5 +17,5 @@ export function SiteHeader() {
         </div>
       </div>
     </header>
-  )
+  );
 }

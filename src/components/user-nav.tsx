@@ -50,7 +50,7 @@ export function UserNav() {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
             <AvatarImage src="/avatars/01.png" alt={session?.user?.name || ""} />
-            <AvatarFallback>{getInitials(session?.user?.name)}</AvatarFallback>
+            <AvatarFallback>{getInitials(session?.user?.name || "")}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>

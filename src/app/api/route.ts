@@ -1,15 +1,15 @@
-import dbConnect from '../../lib/mongodb';
+// import dbConnect from '../../lib/mongodb';
 
-export async function GET(){
+// export async function GET(){
     
-    try {
-    await dbConnect();
-    return new Response(JSON.stringify({result: "Hello world"}));
-    } catch (error){
-        if(error)
-            return new Response(JSON.stringify({result: "Error"}));
-    }
-}
+//     try {
+//     await dbConnect();
+//     return new Response(JSON.stringify({result: "Hello world"}));
+//     } catch (error){
+//         if(error)
+//             return new Response(JSON.stringify({result: "Error"}));
+//     }
+// }
 
 // import dbConnect from '../../lib/mongodb';
 // import Item from '../../models/Item';

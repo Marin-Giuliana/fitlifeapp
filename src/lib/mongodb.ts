@@ -30,24 +30,39 @@
 // }
 
 // export default dbConnect;
+
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI: string = process.env.MONGODB_URI as string;
 
 if (!MONGODB_URI) {
   throw new Error("Please define the MONGODB_URI environment variable");
 }
 
+// Define interface for the cached connection
+interface MongooseCache {
+  conn: mongoose.Connection | null;
+  promise: Promise<typeof mongoose> | null;
+}
+
+// Define global interface to avoid the index signature error
+declare global {
+  let mongoose: {
+    conn: mongoose.Connection | null;
+    promise: Promise<typeof mongoose> | null;
+  } | undefined;
+}
+
 /**
  * Cached connection for MongoDB.
  */
-let cached = global.mongoose;
+const cached: MongooseCache = { conn: null, promise: null };
 
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+if (!mongoose) {
+  mongoose = cached;
 }
 
-export async function connectToDatabase() {
+export async function connectToDatabase(): Promise<mongoose.Connection> {
   if (cached.conn) {
     return cached.conn;
   }
@@ -57,11 +72,11 @@ export async function connectToDatabase() {
       return mongoose;
     });
   }
-  cached.conn = await cached.promise;
+  cached.conn = (await cached.promise).connection;
   return cached.conn;
 }
 
-export async function disconnectFromDatabase() {
+export async function disconnectFromDatabase(): Promise<void> {
   if (cached.conn) {
     await mongoose.disconnect();
     cached.conn = null;
@@ -69,8 +84,17 @@ export async function disconnectFromDatabase() {
   }
 }
 
+// Define User interface
+interface IUser {
+  name?: string;
+  email: string;
+  password?: string;
+  role: "member" | "trainer" | "admin";
+  createdAt: Date;
+}
+
 // User model schema
-const userSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema<IUser>({
   name: String,
   email: {
     type: String,
@@ -90,4 +114,5 @@ const userSchema = new mongoose.Schema({
 });
 
 // Only create the model if it doesn't exist already
-export const User = mongoose.models.User || mongoose.model("User", userSchema);
+export const User = (mongoose.models.User as mongoose.Model<IUser>) ||
+  mongoose.model<IUser>("User", userSchema);

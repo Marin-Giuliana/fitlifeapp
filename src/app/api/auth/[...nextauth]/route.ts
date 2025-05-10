@@ -27,9 +27,9 @@ const handler = NextAuth({
           }
           
           // Mock password check - in a real app you'd use bcrypt or similar
-          // if (user.password !== credentials.password) {
-          //   return null;
-          // }
+          if (user.password !== credentials.password) {
+            return null;
+          }
           
           return {
             id: user._id.toString(),

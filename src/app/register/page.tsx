@@ -37,13 +37,15 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Registration failed");
+        throw new Error(data.message || "Înregistrarea a eșuat");
       }
 
       // Redirect to login page after successful registration
       router.push("/login?registered=true");
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Registration failed");
+      setError(
+        error instanceof Error ? error.message : "Înregistrarea a eșuat"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -53,14 +55,14 @@ export default function RegisterPage() {
     <div className="flex min-h-screen flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold">Create an account</h1>
-          <p className="mt-2 text-gray-600">Sign up to get started</p>
+          <h1 className="text-3xl font-bold">Creează un cont</h1>
+          <p className="mt-2 text-gray-600">Înregistrează-te pentru a începe</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">Nume complet</Label>
               <Input
                 id="name"
                 name="name"
@@ -74,7 +76,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email">Adresa de email</Label>
               <Input
                 id="email"
                 name="email"
@@ -88,7 +90,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Parola</Label>
               <Input
                 id="password"
                 name="password"
@@ -102,29 +104,23 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {error && (
-            <div className="text-red-500 text-sm mt-2">{error}</div>
-          )}
+          {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
 
           <div>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? "Creating account..." : "Create account"}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Crearea contului..." : "Creează cont"}
             </Button>
           </div>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
-            Already have an account?{" "}
+            Deja ai un cont?{" "}
             <Link
               href="/login"
               className="font-medium text-blue-600 hover:text-blue-500"
             >
-              Sign in
+              Intră în cont
             </Link>
           </p>
         </div>

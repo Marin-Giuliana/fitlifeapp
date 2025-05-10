@@ -28,7 +28,7 @@ export default function LoginPage() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        setError("Email sau parolă invalidă");
         setIsLoading(false);
         return;
       }
@@ -38,7 +38,7 @@ export default function LoginPage() {
       router.push("/dashboard/member");
       router.refresh();
     } catch (error) {
-      setError("An unexpected error occurred: " + error);
+      setError("A apărut o eroare neașteptată: " + error);
       setIsLoading(false);
     }
   };
@@ -47,14 +47,14 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold">Welcome back</h1>
-          <p className="mt-2 text-gray-600">Sign in to your account</p>
+          <h1 className="text-3xl font-bold">Bine ai venit</h1>
+          <p className="mt-2 text-gray-600">Autentifică-te în contul tău</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email">Adresa de email</Label>
               <Input
                 id="email"
                 name="email"
@@ -68,7 +68,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Parola</Label>
               <Input
                 id="password"
                 name="password"
@@ -86,19 +86,19 @@ export default function LoginPage() {
 
           <div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? "Autentificare în curs..." : "Autentifică-te"}
             </Button>
           </div>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-600">
-            Don&apos;t have an account?{" "}
+            Nu ai un cont?{" "}
             <Link
               href="/register"
               className="font-medium text-blue-600 hover:text-blue-500"
             >
-              Sign up
+              Înregistrează-te
             </Link>
           </p>
         </div>

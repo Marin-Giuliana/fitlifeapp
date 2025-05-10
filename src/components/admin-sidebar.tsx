@@ -36,22 +36,22 @@ const data = {
   navMain: [
     {
       title: "Contul meu",
-      url: "/contul-meu",
+      url: "/dashboard/admin/contul-meu",
       icon: IconDashboard,
     },
     {
       title: "Orarul meu",
-      url: "/orarul-meu",
+      url: "/dashboard/admin/orarul-meu",
       icon: IconListDetails,
     },
     {
       title: "Antrenorii mei",
-      url: "/antrenorii-mei",
+      url: "/dashboard/admin/antrenorii-mei",
       icon: IconChartBar,
     },
     {
       title: "Administratori",
-      url: "/administratori",
+      url: "/dashboard/admin/administratori",
       icon: IconUsers,
     },
   ],

@@ -36,22 +36,22 @@ const data = {
   navMain: [
     {
       title: "Contul meu",
-      url: "/contul-meu",
+      url: "/dashboard/member/contul-meu",
       icon: IconDashboard,
     },
     {
       title: "Abonamentul meu",
-      url: "/abonamentul-meu",
+      url: "/dashboard/member/abonamentul-meu",
       icon: IconListDetails,
     },
     {
       title: "Clase de grup",
-      url: "/clase-de-grup",
+      url: "/dashboard/member/clase-de-grup",
       icon: IconChartBar,
     },
     {
       title: "Personal Trainer",
-      url: "/personal-trainer",
+      url: "/dashboard/member/personal-trainer",
       icon: IconUsers,
     },
   ],
@@ -151,7 +151,7 @@ export function MemberSidebar({
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
+              <a href="/dashboard/member">
                 <IconInnerShadowTop className="!size-5" />
                 <span className="text-base font-semibold">Fitlife Club</span>
               </a>

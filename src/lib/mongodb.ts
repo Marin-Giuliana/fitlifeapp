@@ -45,33 +45,32 @@ interface MongooseCache {
   promise: Promise<typeof mongoose> | null;
 }
 
-// Define global interface to avoid the index signature error
+// Add mongoose cache to globalThis to persist across hot reloads
 declare global {
-  let mongoose: {
-    conn: mongoose.Connection | null;
-    promise: Promise<typeof mongoose> | null;
-  } | undefined;
+  let mongooseCache: MongooseCache | undefined;
 }
 
-/**
- * Cached connection for MongoDB.
- */
-const cached: MongooseCache = { conn: null, promise: null };
+const globalWithMongoose = globalThis as typeof globalThis & {
+  mongooseCache: MongooseCache;
+};
 
-if (!mongoose) {
-  mongoose = cached;
+// Initialize global cache if not present
+if (!globalWithMongoose.mongooseCache) {
+  globalWithMongoose.mongooseCache = {
+    conn: null,
+    promise: null,
+  };
 }
+
+const cached = globalWithMongoose.mongooseCache;
 
 export async function connectToDatabase(): Promise<mongoose.Connection> {
-  if (cached.conn) {
-    return cached.conn;
-  }
+  if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI).then((mongoose) => {
-      return mongoose;
-    });
+    cached.promise = mongoose.connect(MONGODB_URI).then((mongoose) => mongoose);
   }
+
   cached.conn = (await cached.promise).connection;
   return cached.conn;
 }
@@ -84,7 +83,7 @@ export async function disconnectFromDatabase(): Promise<void> {
   }
 }
 
-// Define User interface
+// User interface and schema
 interface IUser {
   name?: string;
   email: string;
@@ -93,15 +92,10 @@ interface IUser {
   createdAt: Date;
 }
 
-// User model schema
 const userSchema = new mongoose.Schema<IUser>({
   name: String,
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  password: String, // Should be hashed in production
+  email: { type: String, required: true, unique: true },
+  password: String,
   role: {
     type: String,
     enum: ["member", "trainer", "admin"],
@@ -113,6 +107,5 @@ const userSchema = new mongoose.Schema<IUser>({
   },
 });
 
-// Only create the model if it doesn't exist already
 export const User = (mongoose.models.User as mongoose.Model<IUser>) ||
   mongoose.model<IUser>("User", userSchema);

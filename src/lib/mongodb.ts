@@ -83,29 +83,5 @@ export async function disconnectFromDatabase(): Promise<void> {
   }
 }
 
-// User interface and schema
-interface IUser {
-  name?: string;
-  email: string;
-  password?: string;
-  role: "member" | "trainer" | "admin";
-  createdAt: Date;
-}
-
-const userSchema = new mongoose.Schema<IUser>({
-  name: String,
-  email: { type: String, required: true, unique: true },
-  password: String,
-  role: {
-    type: String,
-    enum: ["member", "trainer", "admin"],
-    default: "member",
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
-
-export const User = (mongoose.models.User as mongoose.Model<IUser>) ||
-  mongoose.model<IUser>("User", userSchema);
+// Model is imported from the models directory
+export { User } from '@/models';

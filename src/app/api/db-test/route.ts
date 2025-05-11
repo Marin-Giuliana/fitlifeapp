@@ -1,38 +1,82 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase, User } from '@/lib/mongodb';
+import { connectToDatabase } from '@/lib/mongodb';
+import { User, Echipament, Clasa, SesiunePrivata } from '@/models';
 
 export async function GET() {
   try {
-    // connect to the database
     await connectToDatabase();
-    
-    // check if we can create a test document
+
+    // Test user
     const testUser = await User.create({
-      name: 'Test User',
+      nume: 'Test User',
       email: `test-${Date.now()}@example.com`,
-      password: 'password123',
-      role: 'member'
+      parola: 'password123',
+      dataNasterii: new Date('1990-01-01'),
+      sex: 'masculin',
+      rol: 'membru',
+      membru: {
+        dataInregistrare: new Date(),
+        sedintePT: 0,
+        abonamente: []
+      }
     });
-    
-    // find the user we just created to confirm it exists
-    const foundUser = await User.findById(testUser._id);
-    
-    // delete the test user
+
+    // Test equipment
+    const testEchipament = await Echipament.create({
+      denumire: 'Test Equipment',
+      producator: 'Test Manufacturer',
+      dataAchizitionare: new Date(),
+      stare: 'functional'
+    });
+
+    // Test class
+    const testClasa = await Clasa.create({
+      tipClasa: 'Yoga',
+      nrLocuri: 20,
+      antrenor: {
+        id: testUser._id,
+        nume: testUser.nume
+      },
+      dataClasa: new Date(Date.now() + 86400000), // tomorrow
+      oraClasa: '18:00',
+      participanti: []
+    });
+
+    // Test private session
+    const testSesiune = await SesiunePrivata.create({
+      antrenor: {
+        id: testUser._id,
+        nume: testUser.nume
+      },
+      membru: {
+        id: testUser._id, // just for testing
+        nume: testUser.nume
+      },
+      dataSesiune: new Date(Date.now() + 172800000), // day after tomorrow
+      oraSesiune: '14:00',
+      status: 'confirmata'
+    });
+
+    // Clean up - delete test records
     await User.findByIdAndDelete(testUser._id);
-    
+    await Echipament.findByIdAndDelete(testEchipament._id);
+    await Clasa.findByIdAndDelete(testClasa._id);
+    await SesiunePrivata.findByIdAndDelete(testSesiune._id);
+
     return NextResponse.json({
       success: true,
-      message: 'MongoDB connection successful!',
+      message: 'MongoDB connection and models test successful!',
       databaseStatus: 'connected',
-      testUser: {
-        created: !!testUser,
-        found: !!foundUser,
-        deleted: true
+      testResults: {
+        user: { created: !!testUser, deleted: true },
+        echipament: { created: !!testEchipament, deleted: true },
+        clasa: { created: !!testClasa, deleted: true },
+        sesiunePrivata: { created: !!testSesiune, deleted: true }
       }
     });
   } catch (error) {
     console.error('Database connection test failed:', error);
-    
+
     return NextResponse.json({
       success: false,
       message: 'MongoDB connection failed!',

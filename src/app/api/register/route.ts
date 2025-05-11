@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectToDatabase, User } from "@/lib/mongodb";
+import { connectToDatabase } from "@/lib/mongodb";
+import { User } from "@/models";
 
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, password, role } = await req.json();
+    const { nume, email, parola, dataNasterii, sex, rol } = await req.json();
 
     // validate input
-    if (!name || !email || !password) {
+    if (!nume || !email || !parola) {
       return NextResponse.json(
         { message: "Missing required fields" },
         { status: 400 }
@@ -25,14 +26,54 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // create user
-    // in a real app, you would hash the password before storing it
-    const user = await User.create({
-      name,
+    // Prepare user data with proper type
+    interface UserData {
+      nume: string;
+      email: string;
+      parola: string;
+      dataNasterii?: Date;
+      sex?: string;
+      rol: string;
+      antrenor?: {
+        dataAngajarii: Date;
+        specializari: string[];
+      };
+      membru?: {
+        dataInregistrare: Date;
+        sedintePT: number;
+        abonamente: {
+          tipAbonament: "Standard" | "Standard+" | "Premium";
+          dataInceput: Date;
+          dataSfarsit: Date;
+          status: "valabil" | "expirat";
+        }[];
+      };
+    }
+
+    const userData: UserData = {
+      nume,
       email,
-      password, // in a real application, you would store the hashed password
-      role: role || "member", // default to member if no role provided
-    });
+      parola,
+      dataNasterii: dataNasterii ? new Date(dataNasterii) : undefined,
+      sex,
+      rol: rol || "membru"
+    };
+
+    if (rol === "antrenor") {
+      userData.antrenor = {
+        dataAngajarii: new Date(),
+        specializari: []
+      };
+    } else if (rol === "membru" || !rol) {
+      userData.membru = {
+        dataInregistrare: new Date(),
+        sedintePT: 0,
+        abonamente: []
+      };
+    }
+
+    // create user
+    const user = await User.create(userData);
 
     // return user data without sensitive information
     return NextResponse.json(
@@ -40,9 +81,9 @@ export async function POST(req: NextRequest) {
         message: "User registered successfully",
         user: {
           id: user._id,
-          name: user.name,
+          nume: user.nume,
           email: user.email,
-          role: user.role,
+          rol: user.rol,
         },
       },
       { status: 201 }

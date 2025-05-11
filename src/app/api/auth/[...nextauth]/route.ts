@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { connectToDatabase, User } from "@/lib/mongodb";
+import { connectToDatabase } from "@/lib/mongodb";
+import { User } from "@/models";
 
 const handler = NextAuth({
   providers: [
@@ -17,25 +18,23 @@ const handler = NextAuth({
 
         try {
           await connectToDatabase();
-          
-          // In a real app, you would add proper password handling/hashing
-          // This is just a placeholder for testing
+
+
           const user = await User.findOne({ email: credentials.email });
-          
+
           if (!user) {
             return null;
           }
-          
-          // Mock password check - in a real app you'd use bcrypt or similar
-          if (user.password !== credentials.password) {
+
+          if (user.parola !== credentials.password) {
             return null;
           }
-          
+
           return {
             id: user._id.toString(),
-            name: user.name,
+            name: user.nume,
             email: user.email,
-            role: user.role,
+            role: user.rol,
           };
         } catch (error) {
           console.error("Auth error:", error);

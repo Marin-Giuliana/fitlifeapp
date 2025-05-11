@@ -5,19 +5,19 @@ import {
   IconCamera,
   IconChartBar,
   IconDashboard,
-  IconDatabase,
+  // IconDatabase,
   IconFileAi,
   IconFileDescription,
-  IconFileWord,
+  // IconFileWord,
   IconHelp,
   IconInnerShadowTop,
   IconListDetails,
-  IconReport,
+  // IconReport,
   IconSearch,
   IconSettings,
 } from "@tabler/icons-react";
 
-import { NavDocuments } from "@/components/nav-documents";
+// import { NavDocuments } from "@/components/nav-documents";
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
 // import { UserNav } from "@/components/user-nav";
@@ -114,23 +114,23 @@ const data = {
       icon: IconSearch,
     },
   ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
-    },
-  ],
+  // documents: [
+  //   {
+  //     name: "Data Library",
+  //     url: "#",
+  //     icon: IconDatabase,
+  //   },
+  //   {
+  //     name: "Reports",
+  //     url: "#",
+  //     icon: IconReport,
+  //   },
+  //   {
+  //     name: "Word Assistant",
+  //     url: "#",
+  //     icon: IconFileWord,
+  //   },
+  // ],
 };
 
 export function TrainerSidebar({
@@ -155,7 +155,7 @@ export function TrainerSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
+        {/* <NavDocuments items={data.documents} /> */}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>{/* <UserNav /> */}</SidebarFooter>

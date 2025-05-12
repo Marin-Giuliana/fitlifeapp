@@ -10,7 +10,6 @@ import {
   IconFileDescription,
   // IconFileWord,
   IconHelp,
-  IconInnerShadowTop,
   IconListDetails,
   // IconReport,
   IconSearch,
@@ -30,6 +29,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import Image from "next/image";
 
 const data = {
   navMain: [
@@ -145,9 +145,16 @@ export function TrainerSidebar({
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Fitlife Club</span>
+              <a href="/dashboard/membru">
+                <Image
+                  src="/logo.png"
+                  height={50}
+                  width={50}
+                  alt="logo"
+                ></Image>
+                <span className="text-base font-semibold">
+                  &nbsp;&nbsp;&nbsp;Fitlife Club
+                </span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

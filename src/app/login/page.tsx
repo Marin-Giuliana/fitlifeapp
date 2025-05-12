@@ -35,7 +35,7 @@ export default function LoginPage() {
 
       // Redirect to dashboard based on user role
       // This will be enhanced when we implement role-based redirection
-      router.push("/dashboard/member");
+      router.push("/dashboard/membru");
       router.refresh();
     } catch (error) {
       setError("A apărut o eroare neașteptată: " + error);

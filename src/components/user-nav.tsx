@@ -73,14 +73,21 @@ export function UserNav() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => {
-            const role = session?.user?.role || "member";
-            router.push(`/dashboard/${role}`);
+            // Convert 'member' to 'membru' and 'trainer' to 'antrenor'
+            const roleMapping = {
+              member: "membru",
+              trainer: "antrenor",
+              admin: "admin"
+            };
+            const role = session?.user?.role || "membru";
+            const mappedRole = roleMapping[role as keyof typeof roleMapping] || role;
+            router.push(`/dashboard/${mappedRole}`);
           }}
         >
           Dashboard
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => router.push("/dashboard/member/account")}
+          onClick={() => router.push("/dashboard/membru/contul-meu")}
         >
           Profile
         </DropdownMenuItem>

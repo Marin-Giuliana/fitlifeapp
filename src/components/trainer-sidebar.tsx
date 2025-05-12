@@ -35,17 +35,17 @@ const data = {
   navMain: [
     {
       title: "Contul meu",
-      url: "/dashboard/trainer/contul-meu",
+      url: "/dashboard/antrenor/contul-meu",
       icon: IconDashboard,
     },
     {
       title: "Orarul meu",
-      url: "/dashboard/trainer/orarul-meu",
+      url: "/dashboard/antrenor/orarul-meu",
       icon: IconListDetails,
     },
     {
       title: "Planuri",
-      url: "/dashboard/trainer/planuri",
+      url: "/dashboard/antrenor/planuri",
       icon: IconChartBar,
     },
   ],

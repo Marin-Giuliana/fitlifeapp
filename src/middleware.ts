@@ -27,12 +27,19 @@ export async function middleware(request: NextRequest) {
     const userRole = token.role as string;
     
     // Check if the user is trying to access a dashboard they shouldn't
+    // Define role to path mapping
+    const rolePathMapping: Record<string, string> = {
+      "admin": "/dashboard/admin",
+      "trainer": "/dashboard/antrenor",
+      "member": "/dashboard/membru"
+    };
+
     if (path.startsWith("/dashboard/admin") && userRole !== "admin") {
-      return NextResponse.redirect(new URL(`/dashboard/${userRole}`, request.url));
+      return NextResponse.redirect(new URL(rolePathMapping[userRole] || "/dashboard/membru", request.url));
     }
-    
-    if (path.startsWith("/dashboard/trainer") && userRole !== "trainer" && userRole !== "admin") {
-      return NextResponse.redirect(new URL(`/dashboard/${userRole}`, request.url));
+
+    if (path.startsWith("/dashboard/antrenor") && userRole !== "trainer" && userRole !== "admin") {
+      return NextResponse.redirect(new URL(rolePathMapping[userRole] || "/dashboard/membru", request.url));
     }
   }
   

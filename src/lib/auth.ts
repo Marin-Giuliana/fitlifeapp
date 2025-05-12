@@ -47,7 +47,7 @@ export async function requireRole(allowedRoles: string[]) {
   
   if (!user.role || !allowedRoles.includes(user.role)) {
     // Redirect to default dashboard if user lacks required role
-    redirect("/dashboard/member");
+    redirect("/dashboard/membru");
   }
   
   return user;
@@ -59,8 +59,8 @@ export function useAuthRedirect(role: string) {
     case "admin":
       return "/dashboard/admin";
     case "trainer":
-      return "/dashboard/trainer";
+      return "/dashboard/antrenor";
     default:
-      return "/dashboard/member";
+      return "/dashboard/membru";
   }
 }

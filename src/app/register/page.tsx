@@ -9,9 +9,9 @@ import { Label } from "@/components/ui/label";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [nume, setNume] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [parola, setParola] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -27,10 +27,10 @@ export default function RegisterPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name,
+          nume,
           email,
-          password,
-          role: "member", // Default role for new users
+          parola,
+          rol: "membru", // Default role for new users
         }),
       });
 
@@ -62,15 +62,15 @@ export default function RegisterPage() {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name">Nume complet</Label>
+              <Label htmlFor="nume">Nume complet</Label>
               <Input
-                id="name"
-                name="name"
+                id="nume"
+                name="nume"
                 type="text"
                 autoComplete="name"
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={nume}
+                onChange={(e) => setNume(e.target.value)}
                 className="mt-1"
               />
             </div>
@@ -90,15 +90,15 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <Label htmlFor="password">Parola</Label>
+              <Label htmlFor="parola">Parola</Label>
               <Input
-                id="password"
-                name="password"
+                id="parola"
+                name="parola"
                 type="password"
                 autoComplete="new-password"
                 required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={parola}
+                onChange={(e) => setParola(e.target.value)}
                 className="mt-1"
               />
             </div>

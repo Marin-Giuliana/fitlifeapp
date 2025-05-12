@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [parola, setParola] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -24,7 +24,7 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         redirect: false,
         email,
-        password,
+        password: parola, // Note: NextAuth still expects 'password' field
       });
 
       if (result?.error) {
@@ -68,15 +68,15 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <Label htmlFor="password">Parola</Label>
+              <Label htmlFor="parola">Parola</Label>
               <Input
-                id="password"
-                name="password"
+                id="parola"
+                name="parola"
                 type="password"
                 autoComplete="current-password"
                 required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={parola}
+                onChange={(e) => setParola(e.target.value)}
                 className="mt-1"
               />
             </div>

@@ -2,6 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { User } from "@/models";
 
+// Define interface outside the function for better maintainability
+interface UserData {
+  nume: string;
+  email: string;
+  parola: string;
+  dataNasterii?: Date;
+  sex?: string;
+  rol: string;
+  antrenor?: {
+    dataAngajarii: Date;
+    specializari: string[];
+  };
+  membru?: {
+    dataInregistrare: Date;
+    sedintePT: number;
+    abonamente: {
+      tipAbonament: "Standard" | "Standard+" | "Premium";
+      dataInceput: Date;
+      dataSfarsit: Date;
+      status: "valabil" | "expirat";
+    }[];
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { nume, email, parola, dataNasterii, sex, rol } = await req.json();
@@ -27,29 +51,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Prepare user data with proper type
-    interface UserData {
-      nume: string;
-      email: string;
-      parola: string;
-      dataNasterii?: Date;
-      sex?: string;
-      rol: string;
-      antrenor?: {
-        dataAngajarii: Date;
-        specializari: string[];
-      };
-      membru?: {
-        dataInregistrare: Date;
-        sedintePT: number;
-        abonamente: {
-          tipAbonament: "Standard" | "Standard+" | "Premium";
-          dataInceput: Date;
-          dataSfarsit: Date;
-          status: "valabil" | "expirat";
-        }[];
-      };
-    }
-
     const userData: UserData = {
       nume,
       email,

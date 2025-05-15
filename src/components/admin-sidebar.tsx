@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/sidebar";
 import Image from "next/image";
 
-const data = {
+export const data = {
   navMain: [
     {
       title: "Dashboard",

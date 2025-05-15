@@ -32,7 +32,7 @@ export function LogoutButton({ className }: LogoutButtonProps) {
         onClick={handleLogout}
       >
         <IconLogout className="mr-2" />
-        Log out
+        Deconectare
       </Button>
     </div>
   );

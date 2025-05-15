@@ -90,11 +90,11 @@ export function UserNav() {
         <DropdownMenuItem
           onClick={() => router.push("/dashboard/membru/contul-meu")}
         >
-          Profile
+          Profil
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
-          Log out
+          Deconectare
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

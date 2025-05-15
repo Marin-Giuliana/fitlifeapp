@@ -4,16 +4,13 @@ import * as React from "react";
 import {
   IconCalendar,
   IconDashboard,
-  IconHelp,
   IconUser,
   IconUserShield,
-  IconSearch,
-  IconSettings,
   IconUsers,
 } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
+import { LogoutButton } from "@/components/logout-button";
 import {
   Sidebar,
   SidebarContent,
@@ -53,23 +50,6 @@ export const data = {
       icon: IconUserShield,
     },
   ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
-  ],
 };
 
 export function AdminSidebar({
@@ -99,9 +79,9 @@ export function AdminSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="flex flex-col">
         <NavMain items={data.navMain} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <LogoutButton className="mt-auto mb-4" />
       </SidebarContent>
       <SidebarFooter></SidebarFooter>
     </Sidebar>

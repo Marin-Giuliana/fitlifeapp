@@ -5,14 +5,11 @@ import {
   IconCalendar,
   IconChartBar,
   IconDashboard,
-  IconHelp,
-  IconSearch,
-  IconSettings,
   IconUser,
 } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
+import { LogoutButton } from "@/components/logout-button";
 import {
   Sidebar,
   SidebarContent,
@@ -47,23 +44,6 @@ export const data = {
       icon: IconChartBar,
     },
   ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
-  ],
 };
 
 export function TrainerSidebar({
@@ -93,9 +73,9 @@ export function TrainerSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="flex flex-col">
         <NavMain items={data.navMain} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <LogoutButton className="mt-auto mb-4" />
       </SidebarContent>
       <SidebarFooter></SidebarFooter>
     </Sidebar>

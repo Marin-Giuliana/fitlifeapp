@@ -77,10 +77,11 @@ export function UserNav() {
             const roleMapping = {
               member: "membru",
               trainer: "antrenor",
-              admin: "admin"
+              admin: "admin",
             };
             const role = session?.user?.role || "membru";
-            const mappedRole = roleMapping[role as keyof typeof roleMapping] || role;
+            const mappedRole =
+              roleMapping[role as keyof typeof roleMapping] || role;
             router.push(`/dashboard/${mappedRole}`);
           }}
         >

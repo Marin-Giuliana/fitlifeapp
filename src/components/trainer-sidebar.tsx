@@ -2,24 +2,17 @@
 
 import * as React from "react";
 import {
-  IconCamera,
+  IconCalendar,
   IconChartBar,
   IconDashboard,
-  // IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  // IconFileWord,
   IconHelp,
-  IconListDetails,
-  // IconReport,
   IconSearch,
   IconSettings,
+  IconUser,
 } from "@tabler/icons-react";
 
-// import { NavDocuments } from "@/components/nav-documents";
 import { NavMain } from "@/components/nav-main";
 import { NavSecondary } from "@/components/nav-secondary";
-// import { UserNav } from "@/components/user-nav";
 import {
   Sidebar,
   SidebarContent,
@@ -41,65 +34,17 @@ const data = {
     {
       title: "Contul meu",
       url: "/dashboard/antrenor/contul-meu",
-      icon: IconDashboard,
+      icon: IconUser,
     },
     {
       title: "Orarul meu",
       url: "/dashboard/antrenor/orarul-meu",
-      icon: IconListDetails,
+      icon: IconCalendar,
     },
     {
       title: "Planuri",
       url: "/dashboard/antrenor/planuri",
       icon: IconChartBar,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
     },
   ],
   navSecondary: [
@@ -119,23 +64,6 @@ const data = {
       icon: IconSearch,
     },
   ],
-  // documents: [
-  //   {
-  //     name: "Data Library",
-  //     url: "#",
-  //     icon: IconDatabase,
-  //   },
-  //   {
-  //     name: "Reports",
-  //     url: "#",
-  //     icon: IconReport,
-  //   },
-  //   {
-  //     name: "Word Assistant",
-  //     url: "#",
-  //     icon: IconFileWord,
-  //   },
-  // ],
 };
 
 export function TrainerSidebar({
@@ -150,7 +78,7 @@ export function TrainerSidebar({
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="/dashboard/membru">
+              <a href="/dashboard/antrenor">
                 <Image
                   src="/logo.png"
                   height={50}
@@ -167,10 +95,9 @@ export function TrainerSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        {/* <NavDocuments items={data.documents} /> */}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
-      <SidebarFooter>{/* <UserNav /> */}</SidebarFooter>
+      <SidebarFooter></SidebarFooter>
     </Sidebar>
   );
 }

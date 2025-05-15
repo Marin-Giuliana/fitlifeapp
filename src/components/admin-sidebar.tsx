@@ -35,6 +35,11 @@ import Image from "next/image";
 const data = {
   navMain: [
     {
+      title: "Dashboard",
+      url: "/dashboard/admin/",
+      icon: IconDashboard,
+    },
+    {
       title: "Contul meu",
       url: "/dashboard/admin/contul-meu",
       icon: IconDashboard,

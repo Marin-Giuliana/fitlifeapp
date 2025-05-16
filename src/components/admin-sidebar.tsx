@@ -64,7 +64,7 @@ export function AdminSidebar({
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="/dashboard/admin">
+              <a href="/dashboard/membru">
                 <Image
                   src="/logo.png"
                   height={50}

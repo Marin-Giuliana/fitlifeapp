@@ -58,7 +58,7 @@ export function TrainerSidebar({
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="/dashboard/antrenor">
+              <a href="/dashboard/membru">
                 <Image
                   src="/logo.png"
                   height={50}

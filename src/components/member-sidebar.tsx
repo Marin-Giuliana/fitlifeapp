@@ -8,6 +8,8 @@ import {
   IconUsers,
   IconUser,
 } from "@tabler/icons-react";
+import Link from "next/link";
+import Image from "next/image";
 
 import { NavMain } from "@/components/nav-main";
 import { LogoutButton } from "@/components/logout-button";
@@ -21,7 +23,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import Image from "next/image";
 
 export const data = {
   navMain: [
@@ -65,7 +66,7 @@ export function MemberSidebar({
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="/dashboard/membru">
+              <Link href="/dashboard/membru">
                 <Image
                   src="/logo.png"
                   height={50}
@@ -75,7 +76,7 @@ export function MemberSidebar({
                 <span className="text-base font-semibold">
                   &nbsp;&nbsp;&nbsp;Fitlife Club
                 </span>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

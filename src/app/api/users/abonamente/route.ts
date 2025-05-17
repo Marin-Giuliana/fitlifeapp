@@ -125,7 +125,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     const subscriptionIndex = user.membru.abonamente.findIndex(
-      (sub: any) => sub._id.toString() === subscriptionId
+      (sub: { _id: { toString(): string }; tipAbonament: string }) => sub._id.toString() === subscriptionId
     );
 
     if (subscriptionIndex === -1) {
@@ -224,7 +224,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     const subscription = user.membru.abonamente.find(
-      (sub: any) => sub._id.toString() === finalSubscriptionId
+      (sub: { _id: { toString(): string } }) => sub._id.toString() === finalSubscriptionId
     );
 
     if (!subscription) {

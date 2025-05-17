@@ -1,6 +1,7 @@
 import { TrainerSidebar } from "@/components/trainer-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { LoadingDashboard } from "@/components/loading-dashboard";
 
 export default function TrainerDashboardLayout({
   children,
@@ -22,7 +23,9 @@ export default function TrainerDashboardLayout({
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-              {children}
+              <LoadingDashboard>
+                {children}
+              </LoadingDashboard>
             </div>
           </div>
         </div>

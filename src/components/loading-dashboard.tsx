@@ -17,7 +17,7 @@ export function LoadingDashboard({ children }: LoadingDashboardProps) {
 
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 800);
+    }, 250);
 
     return () => {
       clearTimeout(timer);

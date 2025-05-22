@@ -51,7 +51,6 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function Page() {
-  // const [avatarUrl, setAvatarUrl] = useState("/avatar-placeholder.png");
   const [isUploading, setIsUploading] = useState(false);
 
   const defaultValues: Partial<ProfileFormValues> = {

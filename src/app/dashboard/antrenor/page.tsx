@@ -6,11 +6,8 @@ import {
   IconCalendar,
   IconActivity,
   IconChartBar,
-  IconClock,
   IconBriefcase,
   IconPlus,
-  IconUser,
-  IconAward,
 } from "@tabler/icons-react";
 
 import {

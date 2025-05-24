@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const profileFormSchema = z.object({
   nume: z.string().min(2, {
@@ -180,7 +181,10 @@ export default function Page() {
                               <FormItem>
                                 <FormLabel>Data nașterii</FormLabel>
                                 <FormControl>
-                                  <Input type="date" {...field} />
+                                  <DatePicker
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                  />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>

@@ -53,7 +53,7 @@ export function DashboardTransition() {
   if (!isTransitioning) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex h-screen w-screen items-center justify-center bg-white">
+    <div className="fixed inset-0 z-[9999] flex h-screen w-screen items-center justify-center bg-white dark:bg-black">
       <div className="flex flex-col items-center justify-center">
         <Image
           src="/logo.png"

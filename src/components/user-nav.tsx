@@ -16,11 +16,21 @@ import {
   IconShieldCog,
   // IconUserCircle,
   IconBriefcase,
+  IconMoon,
+  IconSun,
 } from "@tabler/icons-react";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 export function UserNav() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const { setTheme, theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (status === "loading") {
     return <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />;
@@ -113,6 +123,23 @@ export function UserNav() {
             Profil
           </DropdownMenuItem>
           <DropdownMenuSeparator /> */}
+
+          {mounted && (
+            <>
+              <DropdownMenuItem
+                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              >
+                {theme === "light" ? (
+                  <IconMoon className="mr-2 h-4 w-4" />
+                ) : (
+                  <IconSun className="mr-2 h-4 w-4" />
+                )}
+                {theme === "light" ? "Mod întunecat" : "Mod luminos"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+
           <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
             Deconectare
           </DropdownMenuItem>

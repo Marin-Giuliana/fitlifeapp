@@ -10,9 +10,7 @@ import {
   IconUsers,
   IconBriefcase,
   IconCalendar,
-  IconAward,
   IconMail,
-  IconPhone,
   IconDots,
 } from "@tabler/icons-react";
 
@@ -41,49 +39,49 @@ const trainersData = [
     id: 1,
     nume: "Maria Ionescu",
     email: "maria.ionescu@fitlife.com",
-    telefon: "0722 987 654",
-    dataAngajarii: "2020-01-15",
-    specializari: ["Yoga", "Pilates", "Personal Training"],
-    membriActivi: 47,
-    clasePredate: 156,
-    rating: 4.9,
-    status: "activ",
+    dataNasterii: "1985-03-20",
+    sex: "feminin",
+    rol: "antrenor",
+    antrenor: {
+      dataAngajarii: "2020-01-15",
+      specializari: ["Yoga", "Pilates", "Personal Training"],
+    },
   },
   {
     id: 2,
     nume: "Alexandru Popescu",
     email: "alex.popescu@fitlife.com",
-    telefon: "0722 123 456",
-    dataAngajarii: "2019-03-20",
-    specializari: ["CrossFit", "HIIT", "Fitness"],
-    membriActivi: 32,
-    clasePredate: 203,
-    rating: 4.7,
-    status: "activ",
+    dataNasterii: "1988-07-12",
+    sex: "masculin",
+    rol: "antrenor",
+    antrenor: {
+      dataAngajarii: "2019-03-20",
+      specializari: ["CrossFit", "HIIT", "Fitness"],
+    },
   },
   {
     id: 3,
     nume: "Andreea Mihai",
     email: "andreea.mihai@fitlife.com",
-    telefon: "0722 456 789",
-    dataAngajarii: "2021-06-10",
-    specializari: ["Zumba", "Aerobic", "Stretching"],
-    membriActivi: 38,
-    clasePredate: 89,
-    rating: 4.8,
-    status: "activ",
+    dataNasterii: "1992-11-08",
+    sex: "feminin",
+    rol: "antrenor",
+    antrenor: {
+      dataAngajarii: "2021-06-10",
+      specializari: ["Zumba", "Aerobic", "Stretching"],
+    },
   },
   {
     id: 4,
     nume: "Daniel Radu",
     email: "daniel.radu@fitlife.com",
-    telefon: "0722 789 123",
-    dataAngajarii: "2022-09-05",
-    specializari: ["Spinning", "Aqua Aerobic"],
-    membriActivi: 25,
-    clasePredate: 45,
-    rating: 4.6,
-    status: "inactiv",
+    dataNasterii: "1990-02-14",
+    sex: "masculin",
+    rol: "antrenor",
+    antrenor: {
+      dataAngajarii: "2022-09-05",
+      specializari: ["Spinning", "Aqua Aerobic"],
+    },
   },
 ];
 
@@ -137,7 +135,7 @@ export default function Page() {
       </div>
 
       {/* Statistici rapide */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -150,7 +148,7 @@ export default function Page() {
               {trainersData.length}
             </div>
             <p className="text-sm text-muted-foreground">
-              {trainersData.filter((t) => t.status === "activ").length} activi
+              Utilizatori cu rol antrenor
             </p>
           </CardContent>
         </Card>
@@ -159,17 +157,15 @@ export default function Page() {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-lg">
               <IconBriefcase className="h-5 w-5 text-green-600" />
-              Membri îndrumați
+              Femei / Bărbați
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-600">
-              {trainersData.reduce(
-                (sum, trainer) => sum + trainer.membriActivi,
-                0
-              )}
+              {trainersData.filter((t) => t.sex === "feminin").length} /{" "}
+              {trainersData.filter((t) => t.sex === "masculin").length}
             </div>
-            <p className="text-sm text-muted-foreground">Total membri activi</p>
+            <p className="text-sm text-muted-foreground">Distribuția pe gen</p>
           </CardContent>
         </Card>
 
@@ -177,35 +173,22 @@ export default function Page() {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-lg">
               <IconCalendar className="h-5 w-5 text-purple-600" />
-              Clase predate
+              Experiență medie
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-purple-600">
-              {trainersData.reduce(
-                (sum, trainer) => sum + trainer.clasePredate,
-                0
-              )}
-            </div>
-            <p className="text-sm text-muted-foreground">Total clase</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <IconAward className="h-5 w-5 text-orange-600" />
-              Rating mediu
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-orange-600">
               {(
-                trainersData.reduce((sum, trainer) => sum + trainer.rating, 0) /
-                trainersData.length
+                trainersData.reduce((sum, trainer) => {
+                  const startYear = new Date(
+                    trainer.antrenor.dataAngajarii
+                  ).getFullYear();
+                  const currentYear = new Date().getFullYear();
+                  return sum + (currentYear - startYear);
+                }, 0) / trainersData.length
               ).toFixed(1)}
             </div>
-            <p className="text-sm text-muted-foreground">Din 5 stele</p>
+            <p className="text-sm text-muted-foreground">Ani experiență</p>
           </CardContent>
         </Card>
       </div>
@@ -230,7 +213,7 @@ export default function Page() {
             <TableHeader>
               <TableRow>
                 <TableHead>Antrenor</TableHead>
-                <TableHead>Contact</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>Experiență</TableHead>
                 <TableHead>Specializări</TableHead>
                 <TableHead className="w-12"></TableHead>
@@ -250,43 +233,42 @@ export default function Page() {
                       <div>
                         <div className="font-medium">{trainer.nume}</div>
                         <div className="text-sm text-muted-foreground">
-                          {trainer.clasePredate} clase predate
+                          <Badge
+                            variant="secondary"
+                            className="bg-blue-100 text-blue-800 text-xs"
+                          >
+                            {trainer.rol}
+                          </Badge>
                         </div>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-sm">
-                        <IconMail className="h-3 w-3" />
-                        {trainer.email}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <IconPhone className="h-3 w-3" />
-                        {trainer.telefon}
-                      </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <IconMail className="h-3 w-3" />
+                      {trainer.email}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div>
                       <div className="font-medium">
-                        {calculateExperience(trainer.dataAngajarii)}
+                        {calculateExperience(trainer.antrenor.dataAngajarii)}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        din {formatDate(trainer.dataAngajarii)}
+                        din {formatDate(trainer.antrenor.dataAngajarii)}
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {trainer.specializari.slice(0, 2).map((spec) => (
+                      {trainer.antrenor.specializari.slice(0, 2).map((spec) => (
                         <Badge key={spec} variant="outline" className="text-xs">
                           {spec}
                         </Badge>
                       ))}
-                      {trainer.specializari.length > 2 && (
+                      {trainer.antrenor.specializari.length > 2 && (
                         <Badge variant="outline" className="text-xs">
-                          +{trainer.specializari.length - 2}
+                          +{trainer.antrenor.specializari.length - 2}
                         </Badge>
                       )}
                     </div>

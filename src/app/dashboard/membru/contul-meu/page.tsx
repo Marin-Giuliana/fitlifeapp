@@ -25,7 +25,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import {
@@ -46,7 +45,6 @@ const profileFormSchema = z.object({
   }),
   dataNasterii: z.string().optional(),
   sex: z.string().optional(),
-  telefon: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -59,7 +57,6 @@ export default function Page() {
     email: "alex.popescu@example.com",
     dataNasterii: "1990-05-15",
     sex: "masculin",
-    telefon: "0722 123 456",
   };
 
   const form = useForm<ProfileFormValues>({
@@ -219,23 +216,6 @@ export default function Page() {
                               </FormItem>
                             )}
                           />
-
-                          <FormField
-                            control={form.control}
-                            name="telefon"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Telefon</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="Număr de telefon"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
                         </div>
 
                         <Button type="submit" className="w-full md:w-auto">
@@ -292,18 +272,6 @@ export default function Page() {
                       </p>
                     </div>
                     <Button variant="outline">Modifică</Button>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">Sesiuni active</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Gestionează dispozitivele conectate la contul tău
-                      </p>
-                    </div>
-                    <Button variant="outline">Vizualizează</Button>
                   </div>
                 </div>
               </CardContent>

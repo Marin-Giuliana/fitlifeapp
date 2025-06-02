@@ -46,10 +46,10 @@ export default function Page() {
     setShowSubscriptionDialog(true);
   };
 
-  // const openPTDialog = (count: number) => {
-  //   setSelectedPTPackage(count);
-  //   setShowPTDialog(true);
-  // };
+  const openPTDialog = (count: number) => {
+    setSelectedPTPackage(count);
+    setShowPTDialog(true);
+  };
 
   const SubscriptionDialog = () => (
     <Dialog
@@ -195,7 +195,24 @@ export default function Page() {
           <DialogClose asChild>
             <Button variant="outline">Anulează</Button>
           </DialogClose>
-          <Button onClick={() => setShowPTDialog(false)}>
+          <Button
+            onClick={() => {
+              let stripeUrl = "";
+              if (selectedPTPackage === 1) {
+                stripeUrl =
+                  "https://buy.stripe.com/test_8x24gB9RB8Ob3jb0wh1VK03";
+              } else if (selectedPTPackage === 4) {
+                stripeUrl =
+                  "https://buy.stripe.com/test_5kQ14p9RB9Sf1b32Ep1VK04";
+              } else if (selectedPTPackage === 8) {
+                stripeUrl =
+                  "https://buy.stripe.com/test_6oUfZjd3N5BZcTLen71VK05";
+              }
+              if (stripeUrl) {
+                window.location.href = stripeUrl;
+              }
+            }}
+          >
             Confirmă achiziția
           </Button>
         </DialogFooter>
@@ -496,10 +513,7 @@ export default function Page() {
                           size="sm"
                           variant="outline"
                           className="mt-1"
-                          onClick={() => {
-                            window.location.href =
-                              "https://buy.stripe.com/test_8x24gB9RB8Ob3jb0wh1VK03";
-                          }}
+                          onClick={() => openPTDialog(1)}
                         >
                           Alege
                         </Button>
@@ -530,10 +544,7 @@ export default function Page() {
                         <Button
                           size="sm"
                           className="mt-1"
-                          onClick={() => {
-                            window.location.href =
-                              "https://buy.stripe.com/test_5kQ14p9RB9Sf1b32Ep1VK04";
-                          }}
+                          onClick={() => openPTDialog(4)}
                         >
                           Alege
                         </Button>
@@ -565,10 +576,7 @@ export default function Page() {
                           size="sm"
                           variant="outline"
                           className="mt-1"
-                          onClick={() => {
-                            window.location.href =
-                              "https://buy.stripe.com/test_6oUfZjd3N5BZcTLen71VK05";
-                          }}
+                          onClick={() => openPTDialog(8)}
                         >
                           Alege
                         </Button>

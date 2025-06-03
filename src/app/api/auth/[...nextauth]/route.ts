@@ -1,10 +1,15 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import { connectToDatabase } from "@/lib/mongodb";
 import { User } from "@/models";
 
 const handler = NextAuth({
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -48,6 +53,34 @@ const handler = NextAuth({
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider === "google") {
+        try {
+          await connectToDatabase();
+          
+          let existingUser = await User.findOne({ email: user.email });
+          
+          if (!existingUser) {
+            existingUser = await User.create({
+              nume: user.name,
+              email: user.email,
+              rol: "membru",
+              parola: null,
+              googleId: user.id,
+            });
+          }
+          
+          user.id = existingUser._id.toString();
+          user.role = existingUser.rol;
+          
+          return true;
+        } catch (error) {
+          console.error("Google OAuth error:", error);
+          return false;
+        }
+      }
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;

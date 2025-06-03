@@ -33,7 +33,11 @@ const userSchema = new mongoose.Schema({
   },
   parola: {
     type: String,
-    required: true,
+    required: false,
+  },
+  googleId: {
+    type: String,
+    required: false,
   },
   dataNasterii: Date,
   sex: String,

@@ -36,8 +36,8 @@ export const data = {
       icon: IconUser,
     },
     {
-      title: "Orarul meu",
-      url: "/dashboard/admin/orarul-meu",
+      title: "Gestionare",
+      url: "/dashboard/admin/gestionare",
       icon: IconCalendar,
     },
     {

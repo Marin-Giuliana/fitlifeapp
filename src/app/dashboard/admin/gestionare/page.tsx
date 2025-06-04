@@ -485,7 +485,7 @@ export default function Page() {
       <div className="flex flex-col space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Orarul și Managementul Sălii</h1>
+            <h1 className="text-3xl font-bold">Gestionare sală</h1>
             <p className="text-muted-foreground mt-1">
               Gestionează clasele de grup, antrenorii și echipamentele
             </p>

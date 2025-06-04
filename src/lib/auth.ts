@@ -58,7 +58,7 @@ export function useAuthRedirect(role: string) {
   switch(role) {
     case "admin":
       return "/dashboard/admin";
-    case "trainer":
+    case "antrenor":
       return "/dashboard/antrenor";
     default:
       return "/dashboard/membru";

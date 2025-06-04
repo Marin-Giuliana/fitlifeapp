@@ -30,15 +30,15 @@ export async function middleware(request: NextRequest) {
     // Define role to path mapping
     const rolePathMapping: Record<string, string> = {
       "admin": "/dashboard/admin",
-      "trainer": "/dashboard/antrenor",
-      "member": "/dashboard/membru"
+      "antrenor": "/dashboard/antrenor",
+      "membru": "/dashboard/membru"
     };
 
     if (path.startsWith("/dashboard/admin") && userRole !== "admin") {
       return NextResponse.redirect(new URL(rolePathMapping[userRole] || "/dashboard/membru", request.url));
     }
 
-    if (path.startsWith("/dashboard/antrenor") && userRole !== "trainer" && userRole !== "admin") {
+    if (path.startsWith("/dashboard/antrenor") && userRole !== "antrenor" && userRole !== "admin") {
       return NextResponse.redirect(new URL(rolePathMapping[userRole] || "/dashboard/membru", request.url));
     }
   }

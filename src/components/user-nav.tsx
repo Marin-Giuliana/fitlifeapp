@@ -46,8 +46,7 @@ export function UserNav() {
 
   const currentRole = session?.user?.role;
   const hasAdminAccess = currentRole === "admin";
-  const hasTrainerAccess =
-    currentRole === "antrenor" || currentRole === "trainer";
+  const hasTrainerAccess = currentRole === "antrenor";
 
   // const getCurrentDashboardPath = () => {
   //   const roleMapping = {

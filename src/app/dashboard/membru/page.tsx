@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { QRCodeCard } from "@/components/qr-code-card";
 
 export default function Page() {
   return (
@@ -38,73 +39,123 @@ export default function Page() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <Link href="/dashboard/membru/abonamentul-meu">
-          <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-3">
-                <IconCarambola className="h-6 w-6 text-primary" /> Abonamentul
-                meu
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="mb-2">
-                Verifică detaliile abonamentului tău curent, istoricul și
-                opțiunile de reînnoire
-              </CardDescription>
+      {/* Main content grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+        <div className="flex justify-center">
+          <QRCodeCard />
+        </div>
 
-              <div className="mt-4 p-2 bg-muted rounded-md text-sm text-center">
-                Nu ai un abonament activ
+        <Link href="/dashboard/membru/abonamentul-meu">
+          <Card className="h-full hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+            <CardContent className="flex flex-col h-full">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-primary/10 rounded-xl">
+                  <IconCarambola className="h-8 w-8 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">Abonamentul meu</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Gestiune abonament
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex-1 flex flex-col justify-center">
+                <div className="text-center p-4 bg-muted/50 rounded-lg">
+                  <div className="text-2xl font-bold text-muted-foreground mb-1">
+                    Nu este activ
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Activează un abonament pentru a avea acces la toate
+                    facilitățile
+                  </p>
+                </div>
+              </div>
+
+              {/* Action hint */}
+              <div className="mt-auto pt-4 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Click pentru detalii →
+                </p>
               </div>
             </CardContent>
           </Card>
         </Link>
 
         <Link href="/dashboard/membru/clase-de-grup">
-          <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-3">
-                <IconBarbell className="h-6 w-6 text-primary" /> Clase de grup
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="mb-2">
-                Descoperă și înscrie-te la clasele de grup disponibile,
-                verifică-ți participările
-              </CardDescription>
+          <Card className="h-full hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+            <CardContent className="flex flex-col h-full">
+              {/* Icon and Title */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-primary/10 rounded-xl">
+                  <IconBarbell className="h-8 w-8 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">Clase de grup</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Antrenamente în grup
+                  </p>
+                </div>
+              </div>
 
-              <div className="mt-4 p-2 bg-muted rounded-md text-sm">
-                <div className="flex justify-between mb-1">
-                  <span>Total clase:</span>
-                  <span className="font-medium">0</span>
+              <div className="flex-1 flex flex-col justify-center">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                    <div className="text-xl font-bold text-primary mb-1">0</div>
+                    <p className="text-xs text-muted-foreground">Total clase</p>
+                  </div>
+                  <div className="text-center p-3 bg-muted/50 rounded-lg">
+                    <div className="text-xl font-bold text-primary mb-1">0</div>
+                    <p className="text-xs text-muted-foreground">Participări</p>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>Participări:</span>
-                  <span className="font-medium">0</span>
+                <div className="mt-3 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Înscrie-te la clasele disponibile
+                  </p>
                 </div>
+              </div>
+
+              <div className="mt-auto pt-4 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Explorează clasele →
+                </p>
               </div>
             </CardContent>
           </Card>
         </Link>
 
         <Link href="/dashboard/membru/personal-trainer">
-          <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-3">
-                <IconUsers className="h-6 w-6 text-primary" /> Personal Trainer
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription className="mb-2">
-                Programează ședințe cu antrenorul tău personal, vezi istoricul
-                antrenamentelor
-              </CardDescription>
-
-              <div className="mt-4 p-2 bg-muted rounded-md text-sm">
-                <div className="flex justify-between">
-                  <span>Ședințe disponibile:</span>
-                  <span className="font-medium">0</span>
+          <Card className="h-full hover:shadow-md transition-shadow cursor-pointer flex flex-col">
+            <CardContent className="flex flex-col h-full">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-primary/10 rounded-xl">
+                  <IconUsers className="h-8 w-8 text-primary" />
                 </div>
+                <div>
+                  <h3 className="font-semibold text-lg">Personal Trainer</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Antrenament personalizat
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex-1 flex flex-col justify-center">
+                <div className="text-center p-4 bg-muted/50 rounded-lg">
+                  <div className="text-3xl font-bold text-primary mb-2">0</div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
+                    Ședințe disponibile
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Programează o ședință cu antrenorul tău
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-auto pt-4 text-center">
+                <p className="text-xs text-muted-foreground">
+                  Rezervă ședință →
+                </p>
               </div>
             </CardContent>
           </Card>

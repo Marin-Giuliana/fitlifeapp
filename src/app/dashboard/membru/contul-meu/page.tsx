@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { IconUpload, IconUser } from "@tabler/icons-react";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
 import {
   Card,
@@ -35,6 +37,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const profileFormSchema = z.object({
   nume: z.string().min(2, {
@@ -47,25 +58,142 @@ const profileFormSchema = z.object({
   sex: z.string().optional(),
 });
 
+const passwordFormSchema = z
+  .object({
+    parolaVeche: z.string().min(1, {
+      message: "Parola veche este obligatorie.",
+    }),
+    parolaNoua: z.string().min(6, {
+      message: "Parola nouă trebuie să conțină cel puțin 6 caractere.",
+    }),
+    confirmaParola: z.string().min(6, {
+      message: "Confirmarea parolei este obligatorie.",
+    }),
+  })
+  .refine((data) => data.parolaNoua === data.confirmaParola, {
+    message: "Parolele nu coincid.",
+    path: ["confirmaParola"],
+  });
+
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
+type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
 export default function Page() {
   const [isUploading, setIsUploading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  const defaultValues: Partial<ProfileFormValues> = {
-    nume: "Alexandru Popescu",
-    email: "alex.popescu@example.com",
-    dataNasterii: "1990-05-15",
-    sex: "masculin",
+  type AbonamentData = {
+    tipAbonament: string;
+    dataSfarsit: string;
   };
+
+  const [abonamentData, setAbonamentData] = useState<AbonamentData | null>(
+    null
+  );
+  const { data: session } = useSession();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
-    defaultValues,
+    defaultValues: {
+      nume: "",
+      email: "",
+      dataNasterii: "",
+      sex: "",
+    },
   });
 
-  function onSubmit(data: ProfileFormValues) {
-    console.log(data);
+  const passwordForm = useForm<PasswordFormValues>({
+    resolver: zodResolver(passwordFormSchema),
+    defaultValues: {
+      parolaVeche: "",
+      parolaNoua: "",
+      confirmaParola: "",
+    },
+  });
+
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        const response = await fetch("/api/users/profil");
+        if (response.ok) {
+          const data = await response.json();
+          form.reset({
+            nume: data.nume || "",
+            email: data.email || "",
+            dataNasterii: data.dataNasterii
+              ? data.dataNasterii.split("T")[0]
+              : "",
+            sex: data.sex || "",
+          });
+          setAbonamentData(data.abonament);
+        }
+      } catch (error) {
+        console.error("Eroare la încărcarea datelor:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (session) {
+      fetchProfileData();
+    }
+  }, [session, form]);
+
+  async function onSubmit(data: ProfileFormValues) {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/users/profil", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        toast.success("Profilul a fost actualizat cu succes!");
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Eroare la actualizarea profilului");
+      }
+    } catch (error) {
+      console.error("Eroare:", error);
+      toast.error("A apărut o eroare neașteptată");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function onPasswordSubmit(data: PasswordFormValues) {
+    try {
+      setIsChangingPassword(true);
+      const response = await fetch("/api/users/schimba-parola", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          parolaVeche: data.parolaVeche,
+          parolaNoua: data.parolaNoua,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Parola a fost schimbată cu succes!");
+        passwordForm.reset();
+        setIsPasswordDialogOpen(false);
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Eroare la schimbarea parolei");
+      }
+    } catch (error) {
+      console.error("Eroare:", error);
+      toast.error("A apărut o eroare neașteptată");
+    } finally {
+      setIsChangingPassword(false);
+    }
   }
 
   const handleAvatarChange = () => {
@@ -196,7 +324,7 @@ export default function Page() {
                                 <FormLabel>Sex</FormLabel>
                                 <Select
                                   onValueChange={field.onChange}
-                                  defaultValue={field.value}
+                                  value={field.value}
                                 >
                                   <FormControl>
                                     <SelectTrigger>
@@ -218,8 +346,14 @@ export default function Page() {
                           />
                         </div>
 
-                        <Button type="submit" className="w-full md:w-auto">
-                          Salvează modificările
+                        <Button
+                          type="submit"
+                          className="w-full md:w-auto"
+                          disabled={isLoading}
+                        >
+                          {isLoading
+                            ? "Se salvează..."
+                            : "Salvează modificările"}
                         </Button>
                       </form>
                     </Form>
@@ -236,13 +370,36 @@ export default function Page() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="p-4 bg-muted rounded-lg text-center">
-                  <p className="font-medium">Nu ai niciun abonament activ</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Vizitează secțiunea Abonamentul meu pentru a achiziționa un
-                    abonament
-                  </p>
-                </div>
+                {abonamentData ? (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-green-800">
+                          Abonament {abonamentData.tipAbonament}
+                        </p>
+                        <p className="text-sm text-green-600">
+                          Valabil până pe{" "}
+                          {new Date(
+                            abonamentData.dataSfarsit
+                          ).toLocaleDateString("ro-RO")}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Activ
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 bg-muted rounded-lg text-center">
+                    <p className="font-medium">Nu ai niciun abonament activ</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Vizitează secțiunea Abonamentul meu pentru a achiziționa
+                      un abonament
+                    </p>
+                  </div>
+                )}
               </CardContent>
               <CardFooter>
                 <Button variant="outline" className="w-full" asChild>
@@ -271,7 +428,100 @@ export default function Page() {
                         Actualizează parola pentru un plus de securitate
                       </p>
                     </div>
-                    <Button variant="outline">Modifică</Button>
+                    <Dialog
+                      open={isPasswordDialogOpen}
+                      onOpenChange={setIsPasswordDialogOpen}
+                    >
+                      <DialogTrigger asChild>
+                        <Button variant="outline">Modifică</Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Schimbă parola</DialogTitle>
+                          <DialogDescription>
+                            Introdu parola actuală și noua parolă pentru a o
+                            schimba.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <Form {...passwordForm}>
+                          <form
+                            onSubmit={passwordForm.handleSubmit(
+                              onPasswordSubmit
+                            )}
+                            className="space-y-4"
+                          >
+                            <FormField
+                              control={passwordForm.control}
+                              name="parolaVeche"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Parola actuală</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="password"
+                                      placeholder="Introdu parola actuală"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={passwordForm.control}
+                              name="parolaNoua"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Parola nouă</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="password"
+                                      placeholder="Introdu parola nouă"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={passwordForm.control}
+                              name="confirmaParola"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Confirmă parola nouă</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="password"
+                                      placeholder="Confirmă parola nouă"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <DialogFooter>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsPasswordDialogOpen(false)}
+                              >
+                                Anulează
+                              </Button>
+                              <Button
+                                type="submit"
+                                disabled={isChangingPassword}
+                              >
+                                {isChangingPassword
+                                  ? "Se schimbă..."
+                                  : "Schimbă parola"}
+                              </Button>
+                            </DialogFooter>
+                          </form>
+                        </Form>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               </CardContent>

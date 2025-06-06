@@ -35,13 +35,19 @@ const STRIPE_PRODUCTS: StripeProductMapping = {
       durateLuni: 1
     }
   },
-  'prod_pt_4_sedinte': {
+  'prod_1_sedinta': {
+    type: 'sedinte_pt',
+    details: {
+      sedintePT: 1
+    }
+  },
+  'prod_4_sedinte': {
     type: 'sedinte_pt',
     details: {
       sedintePT: 4
     }
   },
-  'prod_pt_8_sedinte': {
+  'prod_8_sedinte': {
     type: 'sedinte_pt',
     details: {
       sedintePT: 8
@@ -56,7 +62,7 @@ export async function POST(request: NextRequest) {
 
     if (!sig) {
       console.error('Lipsește signature-ul Stripe');
-      return NextResponse.json({ error: 'Signature lipsă' }, { status: 400 });
+      return NextResponse.json({ error: 'Signature lipsa' }, { status: 400 });
     }
 
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -101,17 +107,23 @@ export async function POST(request: NextRequest) {
       }
 
       if (session.line_items?.data) {
+        console.log('Line items găsite:', session.line_items.data.length);
+        
         for (const item of session.line_items.data) {
           const productId = item.price?.product;
+          console.log('Procesez produs cu ID:', productId);
           
           if (!productId || !STRIPE_PRODUCTS[productId]) {
             console.warn(`Produs necunoscut sau lipsă: ${productId}`);
+            console.warn('Produse disponibile:', Object.keys(STRIPE_PRODUCTS));
             continue;
           }
 
           const productMapping = STRIPE_PRODUCTS[productId];
+          console.log('Mapping găsit:', productMapping);
 
           if (productMapping.type === 'abonament') {
+            console.log('Adăugând abonament...');
             if (
               productMapping.details.tipAbonament !== undefined &&
               productMapping.details.durateLuni !== undefined
@@ -124,9 +136,12 @@ export async function POST(request: NextRequest) {
               console.error('Detalii abonament lipsă sau incomplete pentru produs:', productId);
             }
           } else if (productMapping.type === 'sedinte_pt') {
+            console.log('Adăugând ședințe PT...');
             await addSedinteTP(user._id, productMapping.details.sedintePT!);
           }
         }
+      } else {
+        console.log('Nu s-au găsit line_items în sesiune');
       }
 
       console.log(`Plată procesată cu succes pentru ${customerEmail}`);
@@ -142,6 +157,8 @@ export async function POST(request: NextRequest) {
   }
 }
 
+
+
 interface AbonamentDetails {
   tipAbonament: string;
   durateLuni: number;
@@ -149,6 +166,8 @@ interface AbonamentDetails {
 
 async function addAbonament(userId: string, details: AbonamentDetails) {
   const { tipAbonament, durateLuni } = details;
+  
+  console.log(`Începând adăugarea abonament: ${tipAbonament} pentru user ${userId}`);
   
   const dataInceput = new Date();
   const dataSfarsit = new Date();
@@ -161,7 +180,10 @@ async function addAbonament(userId: string, details: AbonamentDetails) {
     status: 'valabil'
   };
 
-  await User.updateOne(
+  console.log('Nou abonament creat:', nouAbonament);
+
+  // Marchează abonamentele anterioare ca expirate
+  const expireResult = await User.updateOne(
     { _id: userId },
     { 
       $set: { 
@@ -169,8 +191,10 @@ async function addAbonament(userId: string, details: AbonamentDetails) {
       }
     }
   );
+  console.log('Rezultat expirare abonamente anterioare:', expireResult);
 
-  await User.updateOne(
+  // Adaugă noul abonament
+  const addResult = await User.updateOne(
     { _id: userId },
     { 
       $push: { 
@@ -178,12 +202,15 @@ async function addAbonament(userId: string, details: AbonamentDetails) {
       }
     }
   );
+  console.log('Rezultat adăugare abonament nou:', addResult);
 
   console.log(`Abonament ${tipAbonament} adăugat pentru utilizatorul ${userId}`);
 }
 
 async function addSedinteTP(userId: string, numarSedinte: number) {
-  await User.updateOne(
+  console.log(`Începând adăugarea ${numarSedinte} ședințe PT pentru user ${userId}`);
+  
+  const result = await User.updateOne(
     { _id: userId },
     { 
       $inc: { 
@@ -191,6 +218,7 @@ async function addSedinteTP(userId: string, numarSedinte: number) {
       }
     }
   );
-
+  
+  console.log('Rezultat adăugare ședințe PT:', result);
   console.log(`${numarSedinte} ședințe PT adăugate pentru utilizatorul ${userId}`);
 }

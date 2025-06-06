@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
   IconBarbell,
@@ -21,12 +23,76 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { QRCodeCard } from "@/components/qr-code-card";
 
+interface DashboardData {
+  utilizator: {
+    nume: string;
+    email: string;
+    dataInregistrare?: string;
+  };
+  abonament: {
+    tipAbonament: string;
+    dataInceput: string;
+    dataSfarsit: string;
+    status: string;
+    zileleRamase: number;
+    progres: number;
+  } | null;
+  sedintePT: {
+    disponibile: number;
+  };
+  statistici: {
+    totalClase: number;
+    participariClase: number;
+    progresAbonament: number;
+  };
+}
+
 export default function Page() {
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const response = await fetch('/api/membru/dashboard');
+        if (response.ok) {
+          const data = await response.json();
+          setDashboardData(data);
+        }
+      } catch (error) {
+        console.error('Eroare la încărcarea datelor dashboard:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (session) {
+      fetchDashboardData();
+    }
+  }, [session]);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Se încarcă...</div>
+        </div>
+      </div>
+    );
+  }
+
+  const getInitials = (nume: string) => {
+    return nume.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Bun venit, Membru FitLife!</h1>
+          <h1 className="text-3xl font-bold">
+            Bun venit, {dashboardData?.utilizator.nume || 'Membru FitLife'}!
+          </h1>
           <p className="text-muted-foreground mt-2">
             Îți urăm o zi plină de energie și fitness!
           </p>
@@ -34,7 +100,9 @@ export default function Page() {
         <div className="flex flex-col items-center">
           <Avatar className="h-24 w-24 border-4 border-primary">
             <AvatarImage src="/avatar-placeholder.png" alt="Membru" />
-            <AvatarFallback className="text-xl font-bold">MF</AvatarFallback>
+            <AvatarFallback className="text-xl font-bold">
+              {dashboardData?.utilizator.nume ? getInitials(dashboardData.utilizator.nume) : 'MF'}
+            </AvatarFallback>
           </Avatar>
         </div>
       </div>
@@ -61,15 +129,29 @@ export default function Page() {
               </div>
 
               <div className="flex-1 flex flex-col justify-center">
-                <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <div className="text-2xl font-bold text-muted-foreground mb-1">
-                    Nu este activ
+                {dashboardData?.abonament ? (
+                  <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="text-2xl font-bold text-green-800 mb-1">
+                      {dashboardData.abonament.tipAbonament}
+                    </div>
+                    <p className="text-sm text-green-600 mb-2">
+                      Activ până pe {new Date(dashboardData.abonament.dataSfarsit).toLocaleDateString('ro-RO')}
+                    </p>
+                    <div className="text-xs text-green-600">
+                      {dashboardData.abonament.zileleRamase} zile rămase
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    Activează un abonament pentru a avea acces la toate
-                    facilitățile
-                  </p>
-                </div>
+                ) : (
+                  <div className="text-center p-4 bg-muted/50 rounded-lg">
+                    <div className="text-2xl font-bold text-muted-foreground mb-1">
+                      Nu este activ
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Activează un abonament pentru a avea acces la toate
+                      facilitățile
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Action hint */}
@@ -101,11 +183,15 @@ export default function Page() {
               <div className="flex-1 flex flex-col justify-center">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <div className="text-xl font-bold text-primary mb-1">0</div>
+                    <div className="text-xl font-bold text-primary mb-1">
+                      {dashboardData?.statistici.totalClase || 0}
+                    </div>
                     <p className="text-xs text-muted-foreground">Total clase</p>
                   </div>
                   <div className="text-center p-3 bg-muted/50 rounded-lg">
-                    <div className="text-xl font-bold text-primary mb-1">0</div>
+                    <div className="text-xl font-bold text-primary mb-1">
+                      {dashboardData?.statistici.participariClase || 0}
+                    </div>
                     <p className="text-xs text-muted-foreground">Participări</p>
                   </div>
                 </div>
@@ -142,12 +228,17 @@ export default function Page() {
 
               <div className="flex-1 flex flex-col justify-center">
                 <div className="text-center p-4 bg-muted/50 rounded-lg">
-                  <div className="text-3xl font-bold text-primary mb-2">0</div>
+                  <div className="text-3xl font-bold text-primary mb-2">
+                    {dashboardData?.sedintePT.disponibile || 0}
+                  </div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">
                     Ședințe disponibile
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Programează o ședință cu antrenorul tău
+                    {dashboardData?.sedintePT.disponibile ? 
+                      'Programează o ședință cu antrenorul tău' : 
+                      'Cumpără un pachet de ședințe PT'
+                    }
                   </p>
                 </div>
               </div>
@@ -173,7 +264,9 @@ export default function Page() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
-            <span className="text-3xl font-bold text-primary">0</span>
+            <span className="text-3xl font-bold text-primary">
+              {dashboardData?.statistici.participariClase || 0}
+            </span>
             <span className="text-sm text-muted-foreground">
               Clase frecventate
             </span>
@@ -184,7 +277,9 @@ export default function Page() {
           </div>
 
           <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
-            <span className="text-3xl font-bold text-primary">0</span>
+            <span className="text-3xl font-bold text-primary">
+              {dashboardData?.sedintePT.disponibile || 0}
+            </span>
             <span className="text-sm text-muted-foreground">
               Ședințe PT disponibile
             </span>
@@ -195,14 +290,19 @@ export default function Page() {
           </div>
 
           <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
-            <span className="text-3xl font-bold text-primary">0%</span>
+            <span className="text-3xl font-bold text-primary">
+              {dashboardData?.statistici.progresAbonament || 0}%
+            </span>
             <span className="text-sm text-muted-foreground">
               Progres abonament
             </span>
             <div className="flex items-center mt-2">
               <IconCalendar className="h-4 w-4 mr-1 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">
-                Fără abonament activ
+                {dashboardData?.abonament ? 
+                  `${dashboardData.abonament.zileleRamase} zile rămase` : 
+                  'Fără abonament activ'
+                }
               </span>
             </div>
           </div>

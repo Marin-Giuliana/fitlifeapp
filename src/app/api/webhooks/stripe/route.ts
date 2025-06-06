@@ -2,58 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 
-interface StripeProductMapping {
-  [key: string]: {
-    type: 'abonament' | 'sedinte_pt';
-    details: {
-      tipAbonament?: string;
-      durateLuni?: number;
-      sedintePT?: number;
-    };
-  };
-}
-
-const STRIPE_PRODUCTS: StripeProductMapping = {
-  'prod_standard': {
-    type: 'abonament',
-    details: {
-      tipAbonament: 'Standard',
-      durateLuni: 1
-    }
-  },
-  'prod_standard_plus': {
-    type: 'abonament',
-    details: {
-      tipAbonament: 'Standard+',
-      durateLuni: 1
-    }
-  },
-  'prod_premium': {
-    type: 'abonament',
-    details: {
-      tipAbonament: 'Premium',
-      durateLuni: 1
-    }
-  },
-  'prod_1_sedinta': {
-    type: 'sedinte_pt',
-    details: {
-      sedintePT: 1
-    }
-  },
-  'prod_4_sedinte': {
-    type: 'sedinte_pt',
-    details: {
-      sedintePT: 4
-    }
-  },
-  'prod_8_sedinte': {
-    type: 'sedinte_pt',
-    details: {
-      sedintePT: 8
-    }
-  }
-};
 
 export async function POST(request: NextRequest) {
   try {
@@ -106,42 +54,57 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Utilizator negăsit' }, { status: 404 });
       }
 
-      if (session.line_items?.data) {
-        console.log('Line items găsite:', session.line_items.data.length);
-        
-        for (const item of session.line_items.data) {
-          const productId = item.price?.product;
-          console.log('Procesez produs cu ID:', productId);
-          
-          if (!productId || !STRIPE_PRODUCTS[productId]) {
-            console.warn(`Produs necunoscut sau lipsă: ${productId}`);
-            console.warn('Produse disponibile:', Object.keys(STRIPE_PRODUCTS));
-            continue;
-          }
+      const paymentLinkId = session.payment_link;
+      const amountTotal = session.amount_total; 
+      
+      console.log('Payment link ID:', paymentLinkId);
+      console.log('Amount total (cenți):', amountTotal);
+      console.log('Amount total (RON):', amountTotal / 100);
 
-          const productMapping = STRIPE_PRODUCTS[productId];
-          console.log('Mapping găsit:', productMapping);
+      let productType: 'abonament' | 'sedinte_pt' | null = null;
+      let productDetails: { tipAbonament: string; durateLuni: number } | { sedintePT: number } | null = null;
 
-          if (productMapping.type === 'abonament') {
-            console.log('Adăugând abonament...');
-            if (
-              productMapping.details.tipAbonament !== undefined &&
-              productMapping.details.durateLuni !== undefined
-            ) {
-              await addAbonament(user._id, {
-                tipAbonament: productMapping.details.tipAbonament,
-                durateLuni: productMapping.details.durateLuni
-              });
-            } else {
-              console.error('Detalii abonament lipsă sau incomplete pentru produs:', productId);
-            }
-          } else if (productMapping.type === 'sedinte_pt') {
-            console.log('Adăugând ședințe PT...');
-            await addSedinteTP(user._id, productMapping.details.sedintePT!);
-          }
+      switch (amountTotal) {
+        case 15000: // 150 RON
+          productType = 'abonament';
+          productDetails = { tipAbonament: 'Standard', durateLuni: 1 };
+          break;
+        case 25000: // 250 RON
+          productType = 'abonament';
+          productDetails = { tipAbonament: 'Standard+', durateLuni: 1 };
+          break;
+        case 40000: // 400 RON
+          productType = 'abonament';
+          productDetails = { tipAbonament: 'Premium', durateLuni: 1 };
+          break;
+        case 10000: // 100 RON
+          productType = 'sedinte_pt';
+          productDetails = { sedintePT: 1 };
+          break;
+        case 38000: // 380 RON
+          productType = 'sedinte_pt';
+          productDetails = { sedintePT: 4 };
+          break;
+        case 72000: // 720 RON
+          productType = 'sedinte_pt';
+          productDetails = { sedintePT: 8 };
+          break;
+        default:
+          console.warn(`Sumă necunoscută: ${amountTotal} cenți (${amountTotal / 100} RON)`);
+      }
+
+      if (productType && productDetails) {
+        console.log(`Produs identificat: ${productType}`, productDetails);
+
+        if (productType === 'abonament' && productDetails && 'tipAbonament' in productDetails && 'durateLuni' in productDetails) {
+          console.log('Adăugând abonament...');
+          await addAbonament(user._id, productDetails);
+        } else if (productType === 'sedinte_pt' && productDetails && 'sedintePT' in productDetails) {
+          console.log('Adăugând ședințe PT...');
+          await addSedinteTP(user._id, productDetails.sedintePT);
         }
       } else {
-        console.log('Nu s-au găsit line_items în sesiune');
+        console.error('Nu s-a putut identifica produsul bazat pe sumă');
       }
 
       console.log(`Plată procesată cu succes pentru ${customerEmail}`);
@@ -193,7 +156,6 @@ async function addAbonament(userId: string, details: AbonamentDetails) {
   );
   console.log('Rezultat expirare abonamente anterioare:', expireResult);
 
-  // Adaugă noul abonament
   const addResult = await User.updateOne(
     { _id: userId },
     { 

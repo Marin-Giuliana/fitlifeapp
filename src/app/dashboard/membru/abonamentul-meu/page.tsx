@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import {
   IconCheck,
   IconX,
@@ -35,11 +36,61 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 
+interface AbonamentData {
+  utilizator: {
+    nume: string;
+    email: string;
+  };
+  abonamentCurent: {
+    tipAbonament: string;
+    dataInceput: string;
+    dataSfarsit: string;
+    status: string;
+    zileleRamase: number;
+    zileTotale: number;
+    progres: number;
+  } | null;
+  sedintePT: {
+    disponibile: number;
+  };
+  istoricAbonamente: Array<{
+    tipAbonament: string;
+    dataInceput: string;
+    dataSfarsit: string;
+    status: string;
+  }>;
+}
+
 export default function Page() {
   const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false);
   const [showPTDialog, setShowPTDialog] = useState(false);
   const [selectedSubscription, setSelectedSubscription] = useState("");
   const [selectedPTPackage, setSelectedPTPackage] = useState(0);
+  const [abonamentData, setAbonamentData] = useState<AbonamentData | null>(
+    null
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    const fetchAbonamentData = async () => {
+      try {
+        const response = await fetch("/api/membru/abonament");
+        if (response.ok) {
+          const data = await response.json();
+          setAbonamentData(data);
+        }
+      } catch (error) {
+        console.error("Eroare la încărcarea datelor abonament:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (session) {
+      fetchAbonamentData();
+    }
+  }, [session]);
 
   const openSubscriptionDialog = (type: string) => {
     setSelectedSubscription(type);
@@ -227,19 +278,84 @@ export default function Page() {
       <div className="mb-10">
         <h2 className="text-xl font-semibold mb-4">Abonament curent</h2>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Nu ai un abonament activ</CardTitle>
-            <CardDescription>
-              Alege unul dintre abonamentele de mai jos pentru a continua
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button onClick={() => openSubscriptionDialog("Standard")}>
-              <IconPlus className="h-4 w-4 mr-2" /> Achiziționează un abonament
-            </Button>
-          </CardContent>
-        </Card>
+        {isLoading ? (
+          <Card>
+            <CardContent className="p-6"></CardContent>
+          </Card>
+        ) : abonamentData?.abonamentCurent ? (
+          <Card className="border-green-200 bg-green-50">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-green-800">
+                    Abonament {abonamentData.abonamentCurent.tipAbonament}
+                  </CardTitle>
+                  <CardDescription className="text-green-600">
+                    Abonamentul tău este activ și valabil
+                  </CardDescription>
+                </div>
+                <Badge className="bg-green-100 text-green-800 border-green-200">
+                  Activ
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center p-4 bg-white rounded-lg border">
+                  <div className="text-2xl font-bold text-green-700">
+                    {abonamentData.abonamentCurent.zileleRamase}
+                  </div>
+                  <div className="text-sm text-green-600">zile rămase</div>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg border">
+                  <div className="text-2xl font-bold text-green-700">
+                    {abonamentData.abonamentCurent.progres}%
+                  </div>
+                  <div className="text-sm text-green-600">progres</div>
+                </div>
+                <div className="text-center p-4 bg-white rounded-lg border">
+                  <div className="text-sm text-green-600 mb-1">Expiră pe:</div>
+                  <div className="font-medium text-green-800">
+                    {new Date(
+                      abonamentData.abonamentCurent.dataSfarsit
+                    ).toLocaleDateString("ro-RO")}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 flex gap-2">
+                <Button
+                  variant="outline"
+                  className="border-green-200 text-green-700 hover:bg-green-100 hover:text-black"
+                  onClick={() => openSubscriptionDialog("Standard")}
+                >
+                  Renoiesc abonamentul
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-green-200 text-green-700 hover:bg-green-100 hover:text-black"
+                  onClick={() => openSubscriptionDialog("Premium")}
+                >
+                  Upgrade la Premium
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Nu ai un abonament activ</CardTitle>
+              <CardDescription>
+                Alege unul dintre abonamentele de mai jos pentru a continua
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => openSubscriptionDialog("Standard")}>
+                <IconPlus className="h-4 w-4 mr-2" /> Achiziționează un
+                abonament
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <div className="mb-10">
@@ -452,11 +568,22 @@ export default function Page() {
                 <div className="p-4 bg-muted rounded-lg mb-4">
                   <h3 className="font-medium mb-2">Ședințe disponibile</h3>
                   <div className="flex items-baseline">
-                    <span className="text-3xl font-bold text-primary">0</span>
+                    <span className="text-3xl font-bold text-primary">
+                      {abonamentData?.sedintePT.disponibile || 0}
+                    </span>
                     <span className="text-sm text-muted-foreground ml-2">
                       ședințe rămase
                     </span>
                   </div>
+                  {abonamentData?.sedintePT.disponibile ? (
+                    <p className="text-sm text-green-600 mt-2">
+                      Poți programa o ședință în secțiunea Personal Trainer
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Achiziționează ședințe pentru antrenament personalizat
+                    </p>
+                  )}
                 </div>
 
                 <p className="text-sm text-muted-foreground mb-4">

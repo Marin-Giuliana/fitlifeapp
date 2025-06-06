@@ -48,20 +48,22 @@ interface DashboardData {
 }
 
 export default function Page() {
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
   const { data: session } = useSession();
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const response = await fetch('/api/membru/dashboard');
+        const response = await fetch("/api/membru/dashboard");
         if (response.ok) {
           const data = await response.json();
           setDashboardData(data);
         }
       } catch (error) {
-        console.error('Eroare la încărcarea datelor dashboard:', error);
+        console.error("Eroare la încărcarea datelor dashboard:", error);
       } finally {
         setIsLoading(false);
       }
@@ -73,17 +75,16 @@ export default function Page() {
   }, [session]);
 
   if (isLoading) {
-    return (
-      <div className="container mx-auto py-8 px-4">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Se încarcă...</div>
-        </div>
-      </div>
-    );
+    return <div className="container mx-auto py-8 px-4"></div>;
   }
 
   const getInitials = (nume: string) => {
-    return nume.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    return nume
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
@@ -91,7 +92,7 @@ export default function Page() {
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold">
-            Bun venit, {dashboardData?.utilizator.nume || 'Membru FitLife'}!
+            Bun venit, {dashboardData?.utilizator.nume || "Membru FitLife"}!
           </h1>
           <p className="text-muted-foreground mt-2">
             Îți urăm o zi plină de energie și fitness!
@@ -101,7 +102,9 @@ export default function Page() {
           <Avatar className="h-24 w-24 border-4 border-primary">
             <AvatarImage src="/avatar-placeholder.png" alt="Membru" />
             <AvatarFallback className="text-xl font-bold">
-              {dashboardData?.utilizator.nume ? getInitials(dashboardData.utilizator.nume) : 'MF'}
+              {dashboardData?.utilizator.nume
+                ? getInitials(dashboardData.utilizator.nume)
+                : "MF"}
             </AvatarFallback>
           </Avatar>
         </div>
@@ -135,7 +138,10 @@ export default function Page() {
                       {dashboardData.abonament.tipAbonament}
                     </div>
                     <p className="text-sm text-green-600 mb-2">
-                      Activ până pe {new Date(dashboardData.abonament.dataSfarsit).toLocaleDateString('ro-RO')}
+                      Activ până pe{" "}
+                      {new Date(
+                        dashboardData.abonament.dataSfarsit
+                      ).toLocaleDateString("ro-RO")}
                     </p>
                     <div className="text-xs text-green-600">
                       {dashboardData.abonament.zileleRamase} zile rămase
@@ -235,10 +241,9 @@ export default function Page() {
                     Ședințe disponibile
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {dashboardData?.sedintePT.disponibile ? 
-                      'Programează o ședință cu antrenorul tău' : 
-                      'Cumpără un pachet de ședințe PT'
-                    }
+                    {dashboardData?.sedintePT.disponibile
+                      ? "Programează o ședință cu antrenorul tău"
+                      : "Cumpără un pachet de ședințe PT"}
                   </p>
                 </div>
               </div>
@@ -299,10 +304,9 @@ export default function Page() {
             <div className="flex items-center mt-2">
               <IconCalendar className="h-4 w-4 mr-1 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">
-                {dashboardData?.abonament ? 
-                  `${dashboardData.abonament.zileleRamase} zile rămase` : 
-                  'Fără abonament activ'
-                }
+                {dashboardData?.abonament
+                  ? `${dashboardData.abonament.zileleRamase} zile rămase`
+                  : "Fără abonament activ"}
               </span>
             </div>
           </div>

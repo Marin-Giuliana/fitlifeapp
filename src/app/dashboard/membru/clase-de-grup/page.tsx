@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import {
   format,
   addDays,
@@ -17,6 +18,8 @@ import {
   IconChevronRight,
   IconUsers,
 } from "@tabler/icons-react";
+import { toast } from "sonner";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 import {
   Card,
@@ -46,945 +49,53 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-// Mock data for class types
-const classTypes = [
-  { id: 1, name: "Pilates", color: "bg-pink-500" },
-  { id: 2, name: "Yoga", color: "bg-purple-500" },
-  { id: 3, name: "Spinning", color: "bg-blue-500" },
-  { id: 4, name: "Zumba", color: "bg-yellow-500" },
-  { id: 5, name: "Crossfit", color: "bg-red-500" },
-  { id: 6, name: "Body Pump", color: "bg-green-500" },
-];
-
-// Mock data for classes - May 26 - June 30, 2025
-const mockClasses = [
-  // Week 0 (May 26 - June 1)
-  {
-    id: 55,
-    typeId: 2,
-    date: new Date(2025, 4, 26, 8, 0),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 13,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 56,
-    typeId: 4,
-    date: new Date(2025, 4, 26, 18, 30),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 19,
-    maxParticipants: 25,
-    enrolled: false,
-  },
-  {
-    id: 57,
-    typeId: 1,
-    date: new Date(2025, 4, 27, 9, 30),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 16,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 58,
-    typeId: 5,
-    date: new Date(2025, 4, 27, 19, 0),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 11,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 59,
-    typeId: 3,
-    date: new Date(2025, 4, 28, 7, 30),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 18,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 60,
-    typeId: 6,
-    date: new Date(2025, 4, 28, 17, 0),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 14,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 61,
-    typeId: 2,
-    date: new Date(2025, 4, 29, 10, 0),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 9,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 62,
-    typeId: 4,
-    date: new Date(2025, 4, 29, 18, 0),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 23,
-    maxParticipants: 25,
-    enrolled: false,
-  },
-  {
-    id: 63,
-    typeId: 1,
-    date: new Date(2025, 4, 30, 8, 30),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 17,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 64,
-    typeId: 5,
-    date: new Date(2025, 4, 30, 20, 0),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 12,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 65,
-    typeId: 3,
-    date: new Date(2025, 4, 31, 9, 0),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 20,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 66,
-    typeId: 6,
-    date: new Date(2025, 4, 31, 16, 30),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 15,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 67,
-    typeId: 1,
-    date: new Date(2025, 5, 1, 11, 0),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 10,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 68,
-    typeId: 2,
-    date: new Date(2025, 5, 1, 19, 30),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 8,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-
-  // Week 1 (June 2-8)
-  {
-    id: 1,
-    typeId: 1,
-    date: new Date(2025, 5, 2, 7, 0),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 15,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 2,
-    typeId: 2,
-    date: new Date(2025, 5, 2, 18, 0),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 12,
-    maxParticipants: 15,
-    enrolled: true,
-  },
-  {
-    id: 3,
-    typeId: 3,
-    date: new Date(2025, 5, 3, 9, 0),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 18,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 4,
-    typeId: 4,
-    date: new Date(2025, 5, 3, 19, 0),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 22,
-    maxParticipants: 25,
-    enrolled: false,
-  },
-  {
-    id: 5,
-    typeId: 5,
-    date: new Date(2025, 5, 4, 8, 0),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 10,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 6,
-    typeId: 6,
-    date: new Date(2025, 5, 4, 17, 30),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 16,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 7,
-    typeId: 1,
-    date: new Date(2025, 5, 5, 10, 0),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 8,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 8,
-    typeId: 2,
-    date: new Date(2025, 5, 5, 18, 30),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 11,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 9,
-    typeId: 3,
-    date: new Date(2025, 5, 6, 9, 30),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 19,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 10,
-    typeId: 4,
-    date: new Date(2025, 5, 6, 20, 0),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 20,
-    maxParticipants: 25,
-    enrolled: false,
-  },
-  {
-    id: 11,
-    typeId: 5,
-    date: new Date(2025, 5, 7, 8, 30),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 13,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 12,
-    typeId: 6,
-    date: new Date(2025, 5, 7, 16, 0),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 14,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 13,
-    typeId: 1,
-    date: new Date(2025, 5, 8, 11, 0),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 17,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-
-  // Week 2 (June 9-15)
-  {
-    id: 14,
-    typeId: 2,
-    date: new Date(2025, 5, 9, 7, 30),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 9,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 15,
-    typeId: 3,
-    date: new Date(2025, 5, 9, 18, 0),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 20,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 16,
-    typeId: 4,
-    date: new Date(2025, 5, 10, 9, 0),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 18,
-    maxParticipants: 25,
-    enrolled: false,
-  },
-  {
-    id: 17,
-    typeId: 5,
-    date: new Date(2025, 5, 10, 19, 30),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 12,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 18,
-    typeId: 6,
-    date: new Date(2025, 5, 11, 8, 0),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 15,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 19,
-    typeId: 1,
-    date: new Date(2025, 5, 11, 17, 0),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 13,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 20,
-    typeId: 2,
-    date: new Date(2025, 5, 12, 10, 30),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 7,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 21,
-    typeId: 3,
-    date: new Date(2025, 5, 12, 18, 30),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 16,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 22,
-    typeId: 4,
-    date: new Date(2025, 5, 13, 9, 30),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 23,
-    maxParticipants: 25,
-    enrolled: false,
-  },
-  {
-    id: 23,
-    typeId: 5,
-    date: new Date(2025, 5, 13, 20, 0),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 14,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 24,
-    typeId: 6,
-    date: new Date(2025, 5, 14, 8, 30),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 11,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 25,
-    typeId: 1,
-    date: new Date(2025, 5, 14, 16, 30),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 19,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 26,
-    typeId: 2,
-    date: new Date(2025, 5, 15, 11, 30),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 10,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-
-  // Week 3 (June 16-22)
-  {
-    id: 27,
-    typeId: 3,
-    date: new Date(2025, 5, 16, 7, 0),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 17,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 28,
-    typeId: 4,
-    date: new Date(2025, 5, 16, 18, 0),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 21,
-    maxParticipants: 25,
-    enrolled: false,
-  },
-  {
-    id: 29,
-    typeId: 5,
-    date: new Date(2025, 5, 17, 9, 0),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 13,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 30,
-    typeId: 6,
-    date: new Date(2025, 5, 17, 19, 0),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 18,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 31,
-    typeId: 1,
-    date: new Date(2025, 5, 18, 8, 0),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 12,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 32,
-    typeId: 2,
-    date: new Date(2025, 5, 18, 17, 30),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 8,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 33,
-    typeId: 3,
-    date: new Date(2025, 5, 19, 10, 0),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 20,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 34,
-    typeId: 4,
-    date: new Date(2025, 5, 19, 18, 30),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 19,
-    maxParticipants: 25,
-    enrolled: false,
-  },
-  {
-    id: 35,
-    typeId: 5,
-    date: new Date(2025, 5, 20, 9, 30),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 15,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 36,
-    typeId: 6,
-    date: new Date(2025, 5, 20, 20, 0),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 16,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 37,
-    typeId: 1,
-    date: new Date(2025, 5, 21, 8, 30),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 14,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 38,
-    typeId: 2,
-    date: new Date(2025, 5, 21, 16, 0),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 11,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 39,
-    typeId: 3,
-    date: new Date(2025, 5, 22, 11, 0),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 15,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-
-  // Week 4 (June 23-29)
-  {
-    id: 40,
-    typeId: 4,
-    date: new Date(2025, 5, 23, 7, 30),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 24,
-    maxParticipants: 25,
-    enrolled: false,
-  },
-  {
-    id: 41,
-    typeId: 5,
-    date: new Date(2025, 5, 23, 18, 0),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 9,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 42,
-    typeId: 6,
-    date: new Date(2025, 5, 24, 9, 0),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 17,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 43,
-    typeId: 1,
-    date: new Date(2025, 5, 24, 19, 30),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 18,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 44,
-    typeId: 2,
-    date: new Date(2025, 5, 25, 8, 0),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 6,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 45,
-    typeId: 3,
-    date: new Date(2025, 5, 25, 17, 0),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 19,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 46,
-    typeId: 4,
-    date: new Date(2025, 5, 26, 10, 30),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 22,
-    maxParticipants: 25,
-    enrolled: false,
-  },
-  {
-    id: 47,
-    typeId: 5,
-    date: new Date(2025, 5, 26, 18, 30),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 12,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 48,
-    typeId: 6,
-    date: new Date(2025, 5, 27, 9, 30),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 13,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 49,
-    typeId: 1,
-    date: new Date(2025, 5, 27, 20, 0),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 16,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 50,
-    typeId: 2,
-    date: new Date(2025, 5, 28, 8, 30),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 14,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 51,
-    typeId: 3,
-    date: new Date(2025, 5, 28, 16, 30),
-    instructor: {
-      id: 3,
-      name: "Elena Dumitrescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 18,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-  {
-    id: 52,
-    typeId: 4,
-    date: new Date(2025, 5, 29, 11, 30),
-    instructor: {
-      id: 1,
-      name: "Maria Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 20,
-    maxParticipants: 25,
-    enrolled: false,
-  },
-
-  // Week 5 (June 30)
-  {
-    id: 53,
-    typeId: 5,
-    date: new Date(2025, 5, 30, 7, 0),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 11,
-    maxParticipants: 15,
-    enrolled: false,
-  },
-  {
-    id: 54,
-    typeId: 6,
-    date: new Date(2025, 5, 30, 18, 0),
-    instructor: {
-      id: 4,
-      name: "Alexandru Stanescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    participants: 15,
-    maxParticipants: 20,
-    enrolled: false,
-  },
-];
-
-// Mock data for user's classes
-const userClasses = [
-  {
-    id: 2,
-    typeId: 2,
-    date: new Date(2025, 4, 22, 15, 0),
-    instructor: {
-      id: 2,
-      name: "Andrei Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    status: "inscris", // inscris, anulat, prezent
-  },
-];
-
-// Define the type for a class
-interface Instructor {
+// Interface definitions
+interface ClassType {
   id: number;
+  name: string;
+  color: string;
+}
+
+interface Instructor {
+  id: string;
   name: string;
   avatar: string;
 }
 
 interface GroupClass {
-  id: number;
+  id: string;
   typeId: number;
-  date: Date;
+  date: string;
+  time: string;
   instructor: Instructor;
   participants: number;
   maxParticipants: number;
   enrolled: boolean;
+  status?: string;
+}
+
+interface UserClass {
+  id: string;
+  typeId: number;
+  date: string;
+  time: string;
+  instructor: Instructor;
+  status: string;
+}
+
+interface ClaseData {
+  utilizator: {
+    nume: string;
+    email: string;
+    areAbonamentValabil: boolean;
+  };
+  tipuriClase: ClassType[];
+  clase: GroupClass[];
+  claseUtilizator: UserClass[];
+  perioada: {
+    startDate: string;
+    endDate: string;
+  };
 }
 
 export default function Page() {
@@ -993,6 +104,41 @@ export default function Page() {
   const [weekStart, setWeekStart] = useState(
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
+  const [claseData, setClaseData] = useState<ClaseData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isEnrolling, setIsEnrolling] = useState(false);
+  const [activeTab, setActiveTab] = useState("list");
+  const { data: session } = useSession();
+
+  const fetchClaseData = async (weekStartParam?: Date) => {
+    try {
+      setIsLoading(true);
+      const searchDate = weekStartParam || weekStart;
+      const weekStartISO = searchDate.toISOString();
+
+      const response = await fetch(
+        `/api/membru/clase?weekStart=${weekStartISO}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setClaseData(data);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Eroare la încărcarea claselor");
+      }
+    } catch (error) {
+      console.error("Eroare la încărcarea claselor:", error);
+      toast.error("Eroare la încărcarea claselor");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (session) {
+      fetchClaseData();
+    }
+  }, [session, weekStart]);
 
   // Calculate weekEnd based on weekStart
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
@@ -1002,8 +148,9 @@ export default function Page() {
 
   // Helper to get class type
   const getClassType = (typeId: number) => {
+    if (!claseData) return { name: "Unknown", color: "bg-gray-500" };
     return (
-      classTypes.find((type) => type.id === typeId) || {
+      claseData.tipuriClase.find((type) => type.id === typeId) || {
         name: "Unknown",
         color: "bg-gray-500",
       }
@@ -1012,37 +159,124 @@ export default function Page() {
 
   // Filter classes for selected date
   const getClassesForDate = (date: Date) => {
-    return mockClasses
+    if (!claseData) return [];
+    return claseData.clase
       .filter((cls) => isSameDay(new Date(cls.date), date))
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
+      .sort(
+        (a, b) =>
+          new Date(a.date + " " + a.time).getTime() -
+          new Date(b.date + " " + b.time).getTime()
+      );
   };
 
-  // Format time from date
-  const formatTime = (date: Date) => {
-    return format(date, "HH:mm");
+  // Format time from string
+  const formatTime = (time: string) => {
+    return time;
   };
 
   // Navigation for week view
   const previousWeek = () => {
-    setWeekStart(addDays(weekStart, -7));
+    const newWeekStart = addDays(weekStart, -7);
+    setWeekStart(newWeekStart);
   };
 
   const nextWeek = () => {
-    setWeekStart(addDays(weekStart, 7));
+    const newWeekStart = addDays(weekStart, 7);
+    setWeekStart(newWeekStart);
   };
 
   // Handle class enrollment
   const handleEnroll = (classItem: GroupClass) => {
+    if (!claseData?.utilizator.areAbonamentValabil) {
+      toast.error(
+        "Ai nevoie de un abonament valabil pentru a te înscrie la clase"
+      );
+      return;
+    }
     setSelectedClass(classItem);
     setDialogOpen(true);
   };
 
-  // Confirm enrollment
-  const confirmEnroll = () => {
-    // In a real app, you would call an API to enroll
-    console.log("Enrolled in class:", selectedClass);
-    setDialogOpen(false);
+  // Handle class cancellation
+  const handleCancel = async (classId: string) => {
+    try {
+      setIsEnrolling(true);
+      const response = await fetch("/api/membru/clase", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clasaId: classId,
+          actiune: "anulare",
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast.success(result.message);
+        fetchClaseData(); // Refresh data
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Eroare la anularea înscrierii");
+      }
+    } catch (error) {
+      console.error("Eroare la anularea înscrierii:", error);
+      toast.error("Eroare la anularea înscrierii");
+    } finally {
+      setIsEnrolling(false);
+    }
   };
+
+  // Confirm enrollment
+  const confirmEnroll = async () => {
+    if (!selectedClass) return;
+
+    try {
+      setIsEnrolling(true);
+      const response = await fetch("/api/membru/clase", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clasaId: selectedClass.id,
+          actiune: "inscriere",
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast.success(result.message);
+        setDialogOpen(false);
+        fetchClaseData(); // Refresh data
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Eroare la înscriere");
+      }
+    } catch (error) {
+      console.error("Eroare la înscriere:", error);
+      toast.error("Eroare la înscriere");
+    } finally {
+      setIsEnrolling(false);
+    }
+  };
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!claseData) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="text-center">
+          <p className="text-muted-foreground">
+            Nu s-au putut încărca datele claselor.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -1056,7 +290,7 @@ export default function Page() {
           </div>
 
           <div className="flex items-center space-x-2">
-            {classTypes.map((type) => (
+            {claseData.tipuriClase.map((type) => (
               <div key={type.id} className="flex items-center space-x-1">
                 <div className={`w-3 h-3 rounded-full ${type.color}`}></div>
                 <span className="text-xs text-muted-foreground">
@@ -1067,7 +301,7 @@ export default function Page() {
           </div>
         </div>
 
-        <Tabs defaultValue="list" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList>
             <TabsTrigger value="list">Listă clase</TabsTrigger>
             <TabsTrigger value="my-classes">Clasele mele</TabsTrigger>
@@ -1152,7 +386,7 @@ export default function Page() {
                                   </div>
                                 </TableCell>
                               )}
-                              <TableCell>{formatTime(cls.date)}</TableCell>
+                              <TableCell>{formatTime(cls.time)}</TableCell>
                               <TableCell>
                                 <div className="flex items-center">
                                   <div
@@ -1191,7 +425,17 @@ export default function Page() {
                               </TableCell>
                               <TableCell className="text-right">
                                 {cls.enrolled ? (
-                                  <Badge variant="secondary">Înscris</Badge>
+                                  <div className="flex items-center justify-end gap-2">
+                                    <Badge variant="secondary">Înscris</Badge>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => handleCancel(cls.id)}
+                                      disabled={isEnrolling}
+                                    >
+                                      Anulează
+                                    </Button>
+                                  </div>
                                 ) : (
                                   <Button
                                     size="sm"
@@ -1201,12 +445,16 @@ export default function Page() {
                                         : "default"
                                     }
                                     disabled={
-                                      cls.participants >= cls.maxParticipants
+                                      cls.participants >= cls.maxParticipants ||
+                                      !claseData.utilizator.areAbonamentValabil
                                     }
                                     onClick={() => handleEnroll(cls)}
                                   >
                                     {cls.participants >= cls.maxParticipants
                                       ? "Complet"
+                                      : !claseData.utilizator
+                                          .areAbonamentValabil
+                                      ? "Abonament necesar"
                                       : "Înscrie-te"}
                                   </Button>
                                 )}
@@ -1234,10 +482,11 @@ export default function Page() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {userClasses.length > 0 ? (
+                {claseData.claseUtilizator.length > 0 ? (
                   <div className="space-y-4">
-                    {userClasses.map((cls) => {
+                    {claseData.claseUtilizator.map((cls) => {
                       const classType = getClassType(cls.typeId);
+                      const classDate = new Date(cls.date);
                       return (
                         <Card key={cls.id} className="overflow-hidden">
                           <div className={`h-1 ${classType.color}`}></div>
@@ -1260,12 +509,12 @@ export default function Page() {
                                   </h4>
                                   <div className="flex items-center mt-1 text-sm text-muted-foreground">
                                     <span>
-                                      {format(cls.date, "d MMMM yyyy", {
+                                      {format(classDate, "d MMMM yyyy", {
                                         locale: ro,
                                       })}
                                     </span>
                                     <span className="mx-2">•</span>
-                                    <span>{formatTime(cls.date)}</span>
+                                    <span>{formatTime(cls.time)}</span>
                                   </div>
                                   <div className="flex items-center mt-2">
                                     <Avatar className="h-6 w-6 mr-2">
@@ -1304,6 +553,8 @@ export default function Page() {
                                     variant="outline"
                                     size="sm"
                                     className="ml-2"
+                                    onClick={() => handleCancel(cls.id)}
+                                    disabled={isEnrolling}
                                   >
                                     Anulează
                                   </Button>
@@ -1320,8 +571,12 @@ export default function Page() {
                     <p className="text-muted-foreground">
                       Nu ești înscris la nicio clasă momentan
                     </p>
-                    <Button className="mt-4" variant="outline" asChild>
-                      <a href="#calendar">Descoperă clasele disponibile</a>
+                    <Button 
+                      className="mt-4" 
+                      variant="outline" 
+                      onClick={() => setActiveTab("list")}
+                    >
+                      Descoperă clasele disponibile
                     </Button>
                   </div>
                 )}
@@ -1331,7 +586,6 @@ export default function Page() {
         </Tabs>
       </div>
 
-      {/* Enrollment Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -1359,9 +613,13 @@ export default function Page() {
                 <div className="flex items-center space-x-2">
                   <IconCalendar className="h-4 w-4 text-muted-foreground" />
                   <span>
-                    {format(selectedClass.date, "d MMMM yyyy, HH:mm", {
-                      locale: ro,
-                    })}
+                    {format(
+                      new Date(selectedClass.date),
+                      "d MMMM yyyy",
+                      {
+                        locale: ro,
+                      }
+                    )}, {selectedClass.time}
                   </span>
                 </div>
 
@@ -1393,14 +651,12 @@ export default function Page() {
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               Anulează
             </Button>
-            <Button onClick={confirmEnroll}>Confirmă înscrierea</Button>
+            <Button onClick={confirmEnroll} disabled={isEnrolling}>
+              {isEnrolling ? "Se procesează..." : "Confirmă înscrierea"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
-
-// export default function Page() {
-//   return <div>Clase de grup</div>;
-// }

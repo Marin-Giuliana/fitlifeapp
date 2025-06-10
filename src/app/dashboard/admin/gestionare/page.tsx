@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   format,
   addDays,
@@ -66,50 +69,69 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-// Mock data for class types
-const classTypes = [
-  { id: 1, name: "Pilates", color: "bg-pink-500" },
-  { id: 2, name: "Yoga", color: "bg-purple-500" },
-  { id: 3, name: "Spinning", color: "bg-blue-500" },
-  { id: 4, name: "Zumba", color: "bg-yellow-500" },
-  { id: 5, name: "Crossfit", color: "bg-red-500" },
-  { id: 6, name: "Body Pump", color: "bg-green-500" },
-];
+// Interface definitions
+interface ClassType {
+  id: number;
+  name: string;
+  color: string;
+}
 
-// Mock data for trainers
-const trainers = [
-  {
-    id: 1,
-    name: "Maria Ionescu",
-    avatar: "/avatar-placeholder.png",
-    specialization: "Fitness General, Crossfit",
-    status: "active",
-  },
-  {
-    id: 2,
-    name: "Andrei Popescu",
-    avatar: "/avatar-placeholder.png",
-    specialization: "Bodybuilding, Powerlifting",
-    status: "active",
-  },
-  {
-    id: 3,
-    name: "Elena Dumitrescu",
-    avatar: "/avatar-placeholder.png",
-    specialization: "Yoga, Pilates, Wellness",
-    status: "active",
-  },
-  {
-    id: 4,
-    name: "Alexandru Stanescu",
-    avatar: "/avatar-placeholder.png",
-    specialization: "Functional Training, TRX",
-    status: "active",
-  },
-];
+interface Trainer {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  specialization: string;
+  status: string;
+}
 
-// Mock data for equipment
-const equipment = [
+interface Equipment {
+  id: number;
+  name: string;
+  category: string;
+  location: string;
+  status: string;
+  lastMaintenance: Date;
+  nextMaintenance: Date;
+  purchaseDate: Date;
+  warranty: Date;
+  notes: string;
+}
+
+interface ScheduledClass {
+  id: string;
+  classTypeId: number;
+  trainerId: string;
+  trainerName: string;
+  date: string;
+  time: string;
+  duration: number;
+  maxParticipants: number;
+  currentParticipants: number;
+  location: string;
+  status: string;
+  classType: ClassType;
+}
+
+interface GestionareData {
+  clase: ScheduledClass[];
+  antrenori: Trainer[];
+  tipuriClase: ClassType[];
+  echipamente: Equipment[];
+  perioada: {
+    startDate: string;
+    endDate: string;
+  };
+  statistici: {
+    totalClase: number;
+    totalParticipanti: number;
+    echipamenteFunctionale: number;
+    echipamenteDefecte: number;
+  };
+}
+
+// Mock data for equipment (will be replaced by API data)
+const defaultEquipment = [
   {
     id: 1,
     name: "Banda de alergare Technogym",
@@ -184,106 +206,19 @@ const equipment = [
   },
 ];
 
-// Mock data for scheduled group classes
-const scheduledClasses = [
-  {
-    id: 1,
-    classTypeId: 1,
-    trainerId: 1,
-    date: new Date(2025, 5, 2, 10, 0),
-    duration: 60,
-    maxParticipants: 20,
-    currentParticipants: 15,
-    location: "Sala 1",
-    status: "scheduled",
-    equipmentNeeded: [1, 5],
-  },
-  {
-    id: 2,
-    classTypeId: 5,
-    trainerId: 1,
-    date: new Date(2025, 5, 2, 15, 0),
-    duration: 60,
-    maxParticipants: 15,
-    currentParticipants: 12,
-    location: "Sala 2",
-    status: "scheduled",
-    equipmentNeeded: [3],
-  },
-  {
-    id: 3,
-    classTypeId: 2,
-    trainerId: 3,
-    date: new Date(2025, 5, 3, 9, 0),
-    duration: 75,
-    maxParticipants: 15,
-    currentParticipants: 8,
-    location: "Sala Yoga",
-    status: "scheduled",
-    equipmentNeeded: [5],
-  },
-  {
-    id: 4,
-    classTypeId: 3,
-    trainerId: 2,
-    date: new Date(2025, 5, 4, 18, 0),
-    duration: 45,
-    maxParticipants: 25,
-    currentParticipants: 20,
-    location: "Sala Spinning",
-    status: "scheduled",
-    equipmentNeeded: [2],
-  },
-  {
-    id: 5,
-    classTypeId: 6,
-    trainerId: 4,
-    date: new Date(2025, 5, 5, 11, 0),
-    duration: 60,
-    maxParticipants: 20,
-    currentParticipants: 18,
-    location: "Sala Aparate",
-    status: "scheduled",
-    equipmentNeeded: [3, 4],
-  },
-];
-
 export default function Page() {
+  const { data: session } = useSession();
+  const [gestionareData, setGestionareData] = useState<GestionareData | null>(
+    null
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [weekStart, setWeekStart] = useState(
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
-  // Define a type for scheduled classes
-  type ScheduledClass = {
-    id: number;
-    classTypeId: number;
-    trainerId: number;
-    date: Date;
-    duration: number;
-    maxParticipants: number;
-    currentParticipants: number;
-    location: string;
-    status: string;
-    equipmentNeeded: number[];
-  };
-
   const [selectedClass, setSelectedClass] = useState<ScheduledClass | null>(
     null
   );
-
-  // Define a type for equipment
-  type Equipment = {
-    id: number;
-    name: string;
-    category: string;
-    location: string;
-    status: string;
-    lastMaintenance: Date;
-    nextMaintenance: Date;
-    purchaseDate: Date;
-    warranty: Date;
-    notes: string;
-  };
-
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(
     null
   );
@@ -303,8 +238,39 @@ export default function Page() {
     duration: 60,
     maxParticipants: 20,
     location: "",
-    equipmentNeeded: [] as number[],
   });
+
+  // Fetch data function
+  const fetchGestionareData = useCallback(async (weekStartParam?: Date) => {
+    try {
+      setIsLoading(true);
+      const searchDate = weekStartParam || weekStart;
+      const weekStartISO = searchDate.toISOString();
+
+      const response = await fetch(
+        `/api/admin/gestionare?weekStart=${weekStartISO}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Gestionare data:", data); // Debug log
+        setGestionareData(data);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Eroare la încărcarea datelor");
+      }
+    } catch (error) {
+      console.error("Eroare la încărcarea datelor:", error);
+      toast.error("Eroare la încărcarea datelor");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [weekStart]);
+
+  useEffect(() => {
+    if (session) {
+      fetchGestionareData();
+    }
+  }, [session, weekStart, fetchGestionareData]);
 
   // Equipment form state
   const [equipmentForm, setEquipmentForm] = useState({
@@ -321,37 +287,41 @@ export default function Page() {
 
   // Navigation for week view
   const previousWeek = () => {
-    setWeekStart(addDays(weekStart, -7));
+    const newWeekStart = addDays(weekStart, -7);
+    setWeekStart(newWeekStart);
   };
 
   const nextWeek = () => {
-    setWeekStart(addDays(weekStart, 7));
+    const newWeekStart = addDays(weekStart, 7);
+    setWeekStart(newWeekStart);
   };
 
   // Get classes for a specific date
   const getClassesForDate = (date: Date) => {
-    return scheduledClasses
+    if (!gestionareData) return [];
+    console.log("Total classes available:", gestionareData.clase.length); // Debug log
+    const filtered = gestionareData.clase
       .filter((cls) => isSameDay(new Date(cls.date), date))
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
+      .sort(
+        (a, b) =>
+          new Date(a.date + " " + a.time).getTime() -
+          new Date(b.date + " " + b.time).getTime()
+      );
+    console.log("Classes for date", date, ":", filtered); // Debug log
+    return filtered;
   };
 
-  // Get class type by ID
-  const getClassType = (typeId: number) => {
-    return (
-      classTypes.find((type) => type.id === typeId) || {
-        name: "Unknown",
-        color: "bg-gray-500",
-      }
-    );
-  };
 
   // Get trainer by ID
-  const getTrainer = (trainerId: number) => {
-    return trainers.find((trainer) => trainer.id === trainerId);
+  const getTrainer = (trainerId: string) => {
+    if (!gestionareData) return null;
+    return gestionareData.antrenori.find((trainer) => trainer.id === trainerId);
   };
 
   // Filter equipment
-  const filteredEquipment = equipment.filter((item) => {
+  const filteredEquipment = (
+    gestionareData?.echipamente || defaultEquipment
+  ).filter((item) => {
     const matchesSearch =
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.location.toLowerCase().includes(searchTerm.toLowerCase());
@@ -363,10 +333,26 @@ export default function Page() {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  // Format time from date
-  const formatTime = (date: Date) => {
-    return format(date, "HH:mm");
+  // Format time from string
+  const formatTime = (time: string) => {
+    return time;
   };
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!gestionareData) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="text-center">
+          <p className="text-muted-foreground">
+            Nu s-au putut încărca datele de gestionare.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // Handle class actions
   const handleViewClass = (cls: ScheduledClass) => {
@@ -396,26 +382,47 @@ export default function Page() {
     }
   };
 
-  const saveNewClass = () => {
+  const saveNewClass = async () => {
     if (
       newClass.classTypeId &&
       newClass.trainerId &&
       newClass.date &&
       newClass.time
     ) {
-      // In a real app, you would call an API to create the class
-      console.log("New class created:", newClass);
-      setNewClassDialogOpen(false);
-      setNewClass({
-        classTypeId: "",
-        trainerId: "",
-        date: "",
-        time: "",
-        duration: 60,
-        maxParticipants: 20,
-        location: "",
-        equipmentNeeded: [],
-      });
+      try {
+        setIsSaving(true);
+        const response = await fetch("/api/admin/gestionare", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(newClass),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          toast.success(result.message);
+          setNewClassDialogOpen(false);
+          setNewClass({
+            classTypeId: "",
+            trainerId: "",
+            date: "",
+            time: "",
+            duration: 60,
+            maxParticipants: 20,
+            location: "",
+          });
+          fetchGestionareData(); // Refresh data
+        } else {
+          const errorData = await response.json();
+          toast.error(errorData.error || "Eroare la crearea clasei");
+        }
+      } catch (error) {
+        console.error("Eroare la crearea clasei:", error);
+        toast.error("Eroare la crearea clasei");
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -451,34 +458,33 @@ export default function Page() {
     }
   };
 
-  // Get week statistics
-  const getWeekStats = () => {
-    const weekClasses = scheduledClasses.filter((cls) => {
-      const classDate = new Date(cls.date);
-      return classDate >= weekStart && classDate <= weekEnd;
-    });
+  // Delete class function
+  const deleteClass = async (clasaId: string) => {
+    try {
+      const response = await fetch(`/api/admin/gestionare?clasaId=${clasaId}`, {
+        method: "DELETE",
+      });
 
-    const totalClasses = weekClasses.length;
-    const totalParticipants = weekClasses.reduce(
-      (sum, cls) => sum + cls.currentParticipants,
-      0
-    );
-
-    const equipmentStats = {
-      functional: equipment.filter((e) => e.status === "functional").length,
-      maintenance: equipment.filter((e) => e.status === "maintenance").length,
-      broken: equipment.filter((e) => e.status === "broken").length,
-      total: equipment.length,
-    };
-
-    return {
-      classes: totalClasses,
-      participants: totalParticipants,
-      equipment: equipmentStats,
-    };
+      if (response.ok) {
+        const result = await response.json();
+        toast.success(result.message);
+        fetchGestionareData(); // Refresh data
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Eroare la ștergerea clasei");
+      }
+    } catch (error) {
+      console.error("Eroare la ștergerea clasei:", error);
+      toast.error("Eroare la ștergerea clasei");
+    }
   };
 
-  const stats = getWeekStats();
+  const stats = gestionareData?.statistici || {
+    totalClase: 0,
+    totalParticipanti: 0,
+    echipamenteFunctionale: 0,
+    echipamenteDefecte: 0,
+  };
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -504,7 +510,7 @@ export default function Page() {
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-primary">
-                {stats.classes}
+                {stats.totalClase}
               </div>
               <div className="text-sm text-muted-foreground">
                 Clase programate
@@ -514,7 +520,7 @@ export default function Page() {
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {stats.participants}
+                {stats.totalParticipanti}
               </div>
               <div className="text-sm text-muted-foreground">
                 Participanți totali
@@ -524,7 +530,7 @@ export default function Page() {
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-green-600">
-                {stats.equipment.functional}
+                {stats.echipamenteFunctionale}
               </div>
               <div className="text-sm text-muted-foreground">
                 Echipamente funcționale
@@ -534,7 +540,7 @@ export default function Page() {
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-red-600">
-                {stats.equipment.broken + stats.equipment.maintenance}
+                {stats.echipamenteDefecte}
               </div>
               <div className="text-sm text-muted-foreground">
                 Necesită atenție
@@ -547,7 +553,7 @@ export default function Page() {
           <TabsList>
             <TabsTrigger value="schedule">Program săptămânal</TabsTrigger>
             <TabsTrigger value="equipment">
-              Echipamente ({equipment.length})
+              Echipamente ({gestionareData.echipamente.length})
             </TabsTrigger>
           </TabsList>
 
@@ -617,7 +623,7 @@ export default function Page() {
                         }
 
                         return dayClasses.map((cls, index) => {
-                          const classType = getClassType(cls.classTypeId);
+                          const classType = cls.classType;
                           const trainer = getTrainer(cls.trainerId);
 
                           return (
@@ -636,9 +642,13 @@ export default function Page() {
                               <TableCell>
                                 <div className="flex items-center">
                                   <IconClock className="h-4 w-4 mr-1 text-muted-foreground" />
-                                  {formatTime(cls.date)} -{" "}
-                                  {formatTime(
-                                    addHours(cls.date, cls.duration / 60)
+                                  {formatTime(cls.time)} -{" "}
+                                  {format(
+                                    addHours(
+                                      new Date(`2000-01-01T${cls.time}`),
+                                      cls.duration / 60
+                                    ),
+                                    "HH:mm"
                                   )}
                                 </div>
                               </TableCell>
@@ -700,6 +710,7 @@ export default function Page() {
                                     variant="outline"
                                     size="sm"
                                     className="text-red-600 hover:text-red-700"
+                                    onClick={() => deleteClass(cls.id)}
                                   >
                                     <IconTrash className="h-4 w-4" />
                                   </Button>
@@ -882,20 +893,22 @@ export default function Page() {
             <div className="space-y-6">
               <div className="flex items-center space-x-4">
                 <div
-                  className={`p-3 rounded-full ${
-                    getClassType(selectedClass.classTypeId).color
-                  } bg-opacity-10`}
+                  className={`p-3 rounded-full ${selectedClass.classType.color} bg-opacity-10`}
                 >
                   <IconUsers className="h-6 w-6" />
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold">
-                    {getClassType(selectedClass.classTypeId).name}
+                    {selectedClass.classType.name}
                   </h3>
                   <p className="text-muted-foreground">
-                    {format(selectedClass.date, "d MMMM yyyy, HH:mm", {
-                      locale: ro,
-                    })}
+                    {format(
+                      new Date(selectedClass.date),
+                      "d MMMM yyyy",
+                      {
+                        locale: ro,
+                      }
+                    )}, {selectedClass.time}
                   </p>
                 </div>
               </div>
@@ -935,33 +948,6 @@ export default function Page() {
                   </div>
                 </div>
               </div>
-
-              {selectedClass.equipmentNeeded &&
-                selectedClass.equipmentNeeded.length > 0 && (
-                  <div>
-                    <Label className="text-sm font-medium">
-                      Echipamente necesare:
-                    </Label>
-                    <div className="mt-2 space-y-1">
-                      {selectedClass.equipmentNeeded.map((equipId: number) => {
-                        const equip = equipment.find((e) => e.id === equipId);
-                        return equip ? (
-                          <div
-                            key={equipId}
-                            className="flex items-center space-x-2"
-                          >
-                            <Badge variant="outline">{equip.name}</Badge>
-                            <Badge
-                              variant={getEquipmentStatusColor(equip.status)}
-                            >
-                              {getEquipmentStatusText(equip.status)}
-                            </Badge>
-                          </div>
-                        ) : null;
-                      })}
-                    </div>
-                  </div>
-                )}
             </div>
           )}
 
@@ -1079,7 +1065,7 @@ export default function Page() {
                     <SelectValue placeholder="Selectează tipul clasei" />
                   </SelectTrigger>
                   <SelectContent>
-                    {classTypes.map((type) => (
+                    {gestionareData.tipuriClase.map((type) => (
                       <SelectItem key={type.id} value={type.id.toString()}>
                         <div className="flex items-center space-x-2">
                           <div
@@ -1105,11 +1091,8 @@ export default function Page() {
                     <SelectValue placeholder="Selectează antrenorul" />
                   </SelectTrigger>
                   <SelectContent>
-                    {trainers.map((trainer) => (
-                      <SelectItem
-                        key={trainer.id}
-                        value={trainer.id.toString()}
-                      >
+                    {gestionareData.antrenori.map((trainer) => (
+                      <SelectItem key={trainer.id} value={trainer.id}>
                         {trainer.name} - {trainer.specialization}
                       </SelectItem>
                     ))}
@@ -1201,11 +1184,12 @@ export default function Page() {
                 !newClass.classTypeId ||
                 !newClass.trainerId ||
                 !newClass.date ||
-                !newClass.time
+                !newClass.time ||
+                isSaving
               }
             >
               <IconPlus className="h-4 w-4 mr-1" />
-              Programează clasa
+              {isSaving ? "Se procesează..." : "Programează clasa"}
             </Button>
           </DialogFooter>
         </DialogContent>

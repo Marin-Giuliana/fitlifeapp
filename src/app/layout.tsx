@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Fitlife Club",
-  description: "Fitlife Club",
+  title: "FitLife Club",
+  description: "FitLife Club",
 };
 
 export default function RootLayout({

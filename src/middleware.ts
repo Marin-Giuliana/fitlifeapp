@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
   
   // Define public routes
   const isPublicRoute = 
-    // path === "/" || 
+    path === "/" || 
     path === "/login" || 
     path === "/register" || 
     path.startsWith("/api/");

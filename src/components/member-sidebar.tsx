@@ -74,7 +74,7 @@ export function MemberSidebar({
                   alt="logo"
                 ></Image>
                 <span className="text-base font-semibold">
-                  &nbsp;&nbsp;&nbsp;Fitlife Club
+                  &nbsp;&nbsp;&nbsp;FitLife Club
                 </span>
               </Link>
             </SidebarMenuButton>

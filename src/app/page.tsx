@@ -34,10 +34,7 @@ export default function LandingPage() {
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <Link
-              href="/dashboard/membru"
-              className="flex items-center space-x-3"
-            >
+            <Link href="/" className="flex items-center space-x-3">
               <Image src="/logo.png" height={50} width={50} alt="logo" />
               <span className="text-2xl font-bold whitespace-nowrap">
                 FitLife Club

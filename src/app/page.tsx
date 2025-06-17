@@ -91,7 +91,7 @@ export default function LandingPage() {
                 </Button>
               )}
               <Button asChild className="hidden md:inline-flex" size="lg">
-                <Link href="/login">Intră în cont!</Link>
+                <Link href="/dashboard/membru">Intră în cont!</Link>
               </Button>
               <Button className="md:hidden" variant="ghost" size="icon">
                 <IconMenu2 className="h-5 w-5" />
@@ -784,7 +784,7 @@ export default function LandingPage() {
                 className="text-lg px-8 py-6"
                 asChild
               >
-                <Link href="/login">Ai deja cont?</Link>
+                <Link href="/dashboard/membru">Ai deja cont?</Link>
               </Button>
             </div>
           </div>

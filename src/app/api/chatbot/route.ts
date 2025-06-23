@@ -27,7 +27,7 @@ INFORMAȚII DESPRE FITLIFE CLUB:
 ABONAMENTE:
 - Standard (150 RON/lună): Acces 24/7, echipamente moderne, antrenamente nelimitate, evaluare corporală
 - Standard+ (250 RON/lună): Tot de la Standard + acces nelimitat la clase de grup
-- Premium (450 RON/lună): Tot de la Standard+ + ședințe private cu antrenori + comunicare constantă cu antrenorii
+- Premium (400 RON/lună): Tot de la Standard+ + ședințe private cu antrenori + comunicare constantă cu antrenorii
 
 CLASE DE GRUP:
 - Pilates (Maria Popescu): Lun, Mie, Vin - 18:00, 60 min

@@ -83,18 +83,12 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
 const availableSpecializations = [
-  "Yoga",
   "Pilates",
-  "Zumba",
-  "CrossFit",
-  "Fitness",
-  "Aerobic",
+  "Yoga",
   "Spinning",
-  "Aqua Aerobic",
-  "Personal Training",
-  "Stretching",
-  "Functional",
-  "HIIT",
+  "Zumba",
+  "Crossfit",
+  "Body Pump",
 ];
 
 export default function Page() {

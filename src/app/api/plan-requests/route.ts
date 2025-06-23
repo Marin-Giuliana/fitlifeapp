@@ -187,7 +187,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Update plan request
-    const updates: any = {};
+    const updates: Record<string, unknown> = {};
     if (status && ["pending", "in_progress", "completed"].includes(status)) {
       updates.status = status;
     }

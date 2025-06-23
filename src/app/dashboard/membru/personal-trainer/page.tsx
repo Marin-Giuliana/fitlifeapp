@@ -312,16 +312,34 @@ export default function Page() {
   };
 
   // Handle care plan request
-  const submitCarePlanRequest = () => {
+  const submitCarePlanRequest = async () => {
     if (carePlanTrainer && carePlanMessage) {
-      // In a real app, you would call an API to send the request
-      console.log("Care plan requested:", {
-        trainerId: carePlanTrainer,
-        message: carePlanMessage,
-      });
-      setCarePlanDialogOpen(false);
-      setCarePlanTrainer("");
-      setCarePlanMessage("");
+      try {
+        const response = await fetch("/api/plan-requests", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            antrenorId: carePlanTrainer,
+            tipPlan: "ambele", // Default to both nutrition and exercise plans
+            mesaj: carePlanMessage,
+          }),
+        });
+
+        if (response.ok) {
+          toast.success("Cererea de plan a fost trimisă cu succes!");
+          setCarePlanDialogOpen(false);
+          setCarePlanTrainer("");
+          setCarePlanMessage("");
+        } else {
+          const errorData = await response.json();
+          toast.error(errorData.message || "Eroare la trimiterea cererii");
+        }
+      } catch (error) {
+        console.error("Eroare la trimiterea cererii de plan:", error);
+        toast.error("Eroare la trimiterea cererii de plan");
+      }
     }
   };
 

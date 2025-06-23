@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   IconPlus,
   IconSearch,
-  IconEdit,
   IconTrash,
   IconEye,
   IconUsers,
@@ -33,67 +35,103 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-const trainersData = [
-  {
-    id: 1,
-    nume: "Maria Ionescu",
-    email: "maria.ionescu@fitlife.com",
-    dataNasterii: "1985-03-20",
-    sex: "feminin",
-    rol: "antrenor",
-    antrenor: {
-      dataAngajarii: "2020-01-15",
-      specializari: ["Yoga", "Pilates", "Personal Training"],
-    },
-  },
-  {
-    id: 2,
-    nume: "Alexandru Popescu",
-    email: "alex.popescu@fitlife.com",
-    dataNasterii: "1988-07-12",
-    sex: "masculin",
-    rol: "antrenor",
-    antrenor: {
-      dataAngajarii: "2019-03-20",
-      specializari: ["CrossFit", "HIIT", "Fitness"],
-    },
-  },
-  {
-    id: 3,
-    nume: "Andreea Mihai",
-    email: "andreea.mihai@fitlife.com",
-    dataNasterii: "1992-11-08",
-    sex: "feminin",
-    rol: "antrenor",
-    antrenor: {
-      dataAngajarii: "2021-06-10",
-      specializari: ["Zumba", "Aerobic", "Stretching"],
-    },
-  },
-  {
-    id: 4,
-    nume: "Daniel Radu",
-    email: "daniel.radu@fitlife.com",
-    dataNasterii: "1990-02-14",
-    sex: "masculin",
-    rol: "antrenor",
-    antrenor: {
-      dataAngajarii: "2022-09-05",
-      specializari: ["Spinning", "Aqua Aerobic"],
-    },
-  },
-];
+// Interface definitions
+interface Antrenor {
+  id: string;
+  nume: string;
+  email: string;
+  telefon: string;
+  dataNasterii: Date;
+  sex: string;
+  dataInregistrare: Date;
+  specializari: string[];
+  experienta: string;
+  certificari: string[];
+  status: string;
+  rating: number;
+  numarClienti: number;
+}
+
+interface AntrenoriData {
+  antrenori: Antrenor[];
+  membri: {
+    id: string;
+    nume: string;
+    email: string;
+  }[];
+  statistici: {
+    totalAntrenori: number;
+    antrenoriActivi: number;
+    antrenoriInactivi: number;
+    ratingMediu: number;
+  };
+}
 
 export default function Page() {
+  const { data: session } = useSession();
+  const [antrenoriData, setAntrenoriData] = useState<AntrenoriData | null>(
+    null
+  );
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedAntrenor, setSelectedAntrenor] = useState<Antrenor | null>(
+    null
+  );
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [actionType, setActionType] = useState<"view" | "delete" | "add">(
+    "view"
+  );
+  const [selectedMembru, setSelectedMembru] = useState<string>("");
 
-  const filteredTrainers = trainersData.filter((trainer) => {
-    const matchesSearch = trainer.nume
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    return matchesSearch;
-  });
+  const fetchAntrenoriData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("/api/admin/antrenori");
+
+      if (response.ok) {
+        const data = await response.json();
+        setAntrenoriData(data);
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Eroare la încărcarea antrenorilor");
+      }
+    } catch (error) {
+      console.error("Eroare la încărcarea antrenorilor:", error);
+      toast.error("Eroare la încărcarea antrenorilor");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (session) {
+      fetchAntrenoriData();
+    }
+  }, [session, fetchAntrenoriData]);
+
+  const filteredAntrenori =
+    antrenoriData?.antrenori.filter((antrenor) => {
+      const matchesSearch =
+        antrenor.nume.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        antrenor.email.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesSearch;
+    }) || [];
 
   const getInitials = (name: string) => {
     return name
@@ -103,21 +141,108 @@ export default function Page() {
       .toUpperCase();
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ro-RO");
+  // const formatDate = (dateString: Date) => {
+  //   return new Date(dateString).toLocaleDateString("ro-RO");
+  // };
+
+  const handleAction = (antrenor: Antrenor, action: "view" | "delete") => {
+    setSelectedAntrenor(antrenor);
+    setActionType(action);
+    setDialogOpen(true);
   };
 
-  const calculateExperience = (startDate: string) => {
-    const start = new Date(startDate);
-    const now = new Date();
-    const years = now.getFullYear() - start.getFullYear();
-    const months = now.getMonth() - start.getMonth();
+  const handleAddAntrenor = () => {
+    setActionType("add");
+    setSelectedMembru("");
+    setDialogOpen(true);
+  };
 
-    if (months < 0) {
-      return `${years - 1} ani ${12 + months} luni`;
+  const handleDelete = async () => {
+    if (!selectedAntrenor) return;
+
+    try {
+      const response = await fetch("/api/admin/antrenori", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "demote",
+          antrenorId: selectedAntrenor.id,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast.success(result.message);
+        setDialogOpen(false);
+        fetchAntrenoriData();
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Eroare la retrogradarea antrenorului");
+      }
+    } catch (error) {
+      console.error("Eroare la retrogradarea antrenorului:", error);
+      toast.error("Eroare la retrogradarea antrenorului");
     }
-    return `${years} ani ${months} luni`;
   };
+
+  const handlePromote = async () => {
+    if (!selectedMembru) return;
+
+    try {
+      const response = await fetch("/api/admin/antrenori", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "promote",
+          membruId: selectedMembru,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        toast.success(result.message);
+        setDialogOpen(false);
+        fetchAntrenoriData();
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.error || "Eroare la promovarea membrului");
+      }
+    } catch (error) {
+      console.error("Eroare la promovarea membrului:", error);
+      toast.error("Eroare la promovarea membrului");
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "activ":
+        return "bg-green-100 text-green-800";
+      case "inactiv":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!antrenoriData) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="text-center">
+          <p className="text-muted-foreground">
+            Nu s-au putut încărca datele antrenorilor.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -128,7 +253,7 @@ export default function Page() {
             Gestionează echipa de antrenori din FitLife Club
           </p>
         </div>
-        <Button className="flex items-center gap-2">
+        <Button className="flex items-center gap-2" onClick={handleAddAntrenor}>
           <IconPlus className="h-4 w-4" />
           Adaugă antrenor
         </Button>
@@ -145,7 +270,7 @@ export default function Page() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-600">
-              {trainersData.length}
+              {antrenoriData.statistici.totalAntrenori}
             </div>
             <p className="text-sm text-muted-foreground">
               Utilizatori cu rol antrenor
@@ -157,38 +282,31 @@ export default function Page() {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-lg">
               <IconBriefcase className="h-5 w-5 text-green-600" />
-              Femei / Bărbați
+              Antrenori Activi
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-green-600">
-              {trainersData.filter((t) => t.sex === "feminin").length} /{" "}
-              {trainersData.filter((t) => t.sex === "masculin").length}
+              {antrenoriData.statistici.antrenoriActivi}
             </div>
-            <p className="text-sm text-muted-foreground">Distribuția pe gen</p>
+            <p className="text-sm text-muted-foreground">
+              Din {antrenoriData.statistici.totalAntrenori} totali
+            </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <IconCalendar className="h-5 w-5 text-purple-600" />
-              Experiență medie
+              <IconCalendar className="h-5 w-5 text-red-600" />
+              Antrenori Inactivi
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-purple-600">
-              {(
-                trainersData.reduce((sum, trainer) => {
-                  const startYear = new Date(
-                    trainer.antrenor.dataAngajarii
-                  ).getFullYear();
-                  const currentYear = new Date().getFullYear();
-                  return sum + (currentYear - startYear);
-                }, 0) / trainersData.length
-              ).toFixed(1)}
+            <div className="text-3xl font-bold text-red-600">
+              {antrenoriData.statistici.antrenoriInactivi}
             </div>
-            <p className="text-sm text-muted-foreground">Ani experiență</p>
+            <p className="text-sm text-muted-foreground">Dezactivați</p>
           </CardContent>
         </Card>
       </div>
@@ -198,7 +316,7 @@ export default function Page() {
         <div className="relative flex-1">
           <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Caută după nume..."
+            placeholder="Caută după nume sau email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -213,62 +331,52 @@ export default function Page() {
             <TableHeader>
               <TableRow>
                 <TableHead>Antrenor</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Experiență</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead>Specializări</TableHead>
                 <TableHead className="w-12"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTrainers.map((trainer) => (
-                <TableRow key={trainer.id}>
+              {filteredAntrenori.map((antrenor) => (
+                <TableRow key={antrenor.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-10 w-10">
                         <AvatarImage src="/avatar-placeholder.png" />
                         <AvatarFallback>
-                          {getInitials(trainer.nume)}
+                          {getInitials(antrenor.nume)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium">{trainer.nume}</div>
-                        <div className="text-sm text-muted-foreground">
-                          <Badge
-                            variant="secondary"
-                            className="bg-blue-100 text-blue-800 text-xs"
-                          >
-                            {trainer.rol}
-                          </Badge>
-                        </div>
+                        <div className="font-medium">{antrenor.nume}</div>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2 text-sm">
                       <IconMail className="h-3 w-3" />
-                      {trainer.email}
+                      {antrenor.email}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div>
-                      <div className="font-medium">
-                        {calculateExperience(trainer.antrenor.dataAngajarii)}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        din {formatDate(trainer.antrenor.dataAngajarii)}
-                      </div>
-                    </div>
+                    <Badge
+                      variant="secondary"
+                      className={`${getStatusColor(antrenor.status)} text-xs`}
+                    >
+                      {antrenor.status === "activ" ? "Activ" : "Inactiv"}
+                    </Badge>
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {trainer.antrenor.specializari.slice(0, 2).map((spec) => (
+                      {antrenor.specializari.slice(0, 2).map((spec) => (
                         <Badge key={spec} variant="outline" className="text-xs">
                           {spec}
                         </Badge>
                       ))}
-                      {trainer.antrenor.specializari.length > 2 && (
+                      {antrenor.specializari.length > 2 && (
                         <Badge variant="outline" className="text-xs">
-                          +{trainer.antrenor.specializari.length - 2}
+                          +{antrenor.specializari.length - 2}
                         </Badge>
                       )}
                     </div>
@@ -281,17 +389,18 @@ export default function Page() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleAction(antrenor, "view")}
+                        >
                           <IconEye className="h-4 w-4 mr-2" />
                           Vezi detalii
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <IconEdit className="h-4 w-4 mr-2" />
-                          Editează
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => handleAction(antrenor, "delete")}
+                        >
                           <IconTrash className="h-4 w-4 mr-2" />
-                          Șterge
+                          Retrogradează la membru
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -302,6 +411,121 @@ export default function Page() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Dialog pentru acțiuni */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {actionType === "view" && "Detalii Antrenor"}
+              {actionType === "delete" && "Confirmă Retrogradarea"}
+              {actionType === "add" && "Promovează Membru la Antrenor"}
+            </DialogTitle>
+            <DialogDescription>
+              {actionType === "view" && "Informații complete despre antrenor"}
+              {actionType === "delete" &&
+                "Ești sigur că vrei să retrogrezi acest antrenor la membru?"}
+              {actionType === "add" &&
+                "Selectează un membru din listă pentru a-l promova la antrenor"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            {actionType === "add" && (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">
+                    Selectează membru:
+                  </label>
+                  <Select
+                    value={selectedMembru}
+                    onValueChange={setSelectedMembru}
+                  >
+                    <SelectTrigger className="w-full mt-2">
+                      <SelectValue placeholder="Alege un membru din listă" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {antrenoriData?.membri.map((membru) => (
+                        <SelectItem key={membru.id} value={membru.id}>
+                          {membru.nume} - {membru.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {selectedAntrenor && (
+              <>
+                {actionType === "view" && (
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-4">
+                      <Avatar className="h-16 w-16">
+                        <AvatarImage src="/avatar-placeholder.png" />
+                        <AvatarFallback className="text-lg">
+                          {getInitials(selectedAntrenor.nume)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="text-xl font-semibold">
+                          {selectedAntrenor.nume}
+                        </h3>
+                        <p className="text-muted-foreground">
+                          {selectedAntrenor.email}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="font-medium">Specializări:</span>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {selectedAntrenor.specializari.map((spec) => (
+                          <Badge key={spec} variant="outline">
+                            {spec}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {actionType === "delete" && (
+                  <div className="text-center">
+                    <p>
+                      Antrenorul <strong>{selectedAntrenor.nume}</strong> va fi
+                      retrogradat la membru.
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Această acțiune va schimba rolul utilizatorului în membru.
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>
+              {actionType === "delete"
+                ? "Anulează"
+                : actionType === "add"
+                ? "Anulează"
+                : "Închide"}
+            </Button>
+            {actionType === "delete" && (
+              <Button variant="destructive" onClick={handleDelete}>
+                Retrogradează
+              </Button>
+            )}
+            {actionType === "add" && (
+              <Button onClick={handlePromote} disabled={!selectedMembru}>
+                Promovează
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

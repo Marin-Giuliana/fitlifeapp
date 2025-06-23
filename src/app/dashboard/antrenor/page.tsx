@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
   IconUsers,
@@ -7,39 +9,145 @@ import {
   IconActivity,
   IconChartBar,
   IconBriefcase,
-  IconPlus,
 } from "@tabler/icons-react";
 
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+
+type DashboardData = {
+  antrenor: {
+    nume: string;
+    email: string;
+    specializari: string[];
+  };
+  statistici: {
+    membriActivi: number;
+    claseAstazi: number;
+    claseSaptamana: number;
+    sesiuniProgramate: number;
+    totalClasePredate: number;
+    ratingMediu: number;
+  };
+  activitatiZilei: Array<{
+    id: string;
+    tip: "grupa" | "privata";
+    nume: string;
+    ora: string;
+    participanti?: number;
+    maxParticipanti?: number;
+    client?: string;
+    status: string;
+  }>;
+  resumeRapid: {
+    claseAstazi: number;
+    claseSaptamana: number;
+    sesiuniProgramate: number;
+  };
+};
 
 export default function Page() {
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { data: session } = useSession();
+
+  const getInitials = (name: string) => {
+    if (!name) return "??";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "finalizata":
+        return "bg-green-500";
+      case "confirmata":
+      case "programata":
+        return "bg-blue-500";
+      default:
+        return "bg-orange-500";
+    }
+  };
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!session) return;
+
+      try {
+        setIsLoading(true);
+        const response = await fetch("/api/antrenor/dashboard");
+
+        if (!response.ok) {
+          throw new Error("Eroare la încărcarea datelor");
+        }
+
+        const data = await response.json();
+        setDashboardData(data);
+      } catch (err) {
+        console.error("Eroare la încărcarea dashboard-ului:", err);
+        setError(err instanceof Error ? err.message : "Eroare necunoscută");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [session]);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-8 px-4 flex items-center justify-center min-h-[400px]">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (error || !dashboardData) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="text-center text-red-600">
+          Eroare la încărcarea datelor: {error || "Date indisponibile"}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Bun venit, Antrenor Maria!</h1>
+          <h1 className="text-3xl font-bold">
+            Bun venit, {dashboardData.antrenor.nume}!
+          </h1>
           <p className="text-muted-foreground mt-2">
             Gata să inspiri și să transformi vieți astăzi?
           </p>
         </div>
         <div className="flex flex-col items-center">
           <Avatar className="h-24 w-24 border-4 border-primary">
-            <AvatarImage src="/avatar-placeholder.png" alt="Antrenor" />
-            <AvatarFallback className="text-xl font-bold">MI</AvatarFallback>
+            <AvatarFallback className="text-xl font-bold">
+              {getInitials(dashboardData.antrenor.nume)}
+            </AvatarFallback>
           </Avatar>
-          <div className="flex gap-1 mt-2">
-            <Badge variant="outline">Yoga</Badge>
-            <Badge variant="outline">Pilates</Badge>
+          <div className="flex gap-1 mt-2 flex-wrap justify-center">
+            {dashboardData.antrenor.specializari.map((spec) => (
+              <Badge key={spec} variant="outline">
+                {spec}
+              </Badge>
+            ))}
           </div>
         </div>
       </div>
@@ -61,11 +169,15 @@ export default function Page() {
               <div className="mt-4 p-2 bg-muted rounded-md text-sm">
                 <div className="flex justify-between mb-1">
                   <span>Astăzi:</span>
-                  <span className="font-medium">3 clase</span>
+                  <span className="font-medium">
+                    {dashboardData.resumeRapid.claseAstazi} clase
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span>Săptămâna aceasta:</span>
-                  <span className="font-medium">12 clase</span>
+                  <span className="font-medium">
+                    {dashboardData.resumeRapid.claseSaptamana} clase
+                  </span>
                 </div>
               </div>
             </CardContent>
@@ -86,11 +198,15 @@ export default function Page() {
             <div className="mt-4 p-2 bg-muted rounded-md text-sm">
               <div className="flex justify-between mb-1">
                 <span>Membri activi:</span>
-                <span className="font-medium">47</span>
+                <span className="font-medium">
+                  {dashboardData.statistici.membriActivi}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Sesiuni programate:</span>
-                <span className="font-medium">8</span>
+                <span className="font-medium">
+                  {dashboardData.statistici.sesiuniProgramate}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -113,7 +229,7 @@ export default function Page() {
               <div className="mt-4 p-2 bg-muted rounded-md text-sm">
                 <div className="flex justify-between">
                   <span>Planuri create:</span>
-                  <span className="font-medium">23</span>
+                  <span className="font-medium">0</span>
                 </div>
               </div>
             </CardContent>
@@ -133,51 +249,40 @@ export default function Page() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="h-3 w-3 bg-green-500 rounded-full"></div>
-                  <div>
-                    <p className="font-medium">Yoga Matinal</p>
-                    <p className="text-sm text-muted-foreground">
-                      08:00 - 09:00
-                    </p>
+              {dashboardData.activitatiZilei.length > 0 ? (
+                dashboardData.activitatiZilei.map((activitate) => (
+                  <div
+                    key={activitate.id}
+                    className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`h-3 w-3 rounded-full ${getStatusColor(
+                          activitate.status
+                        )}`}
+                      ></div>
+                      <div>
+                        <p className="font-medium">{activitate.nume}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {activitate.ora}
+                        </p>
+                      </div>
+                    </div>
+                    {activitate.tip === "grupa" ? (
+                      <Badge variant="secondary">
+                        {activitate.participanti} participanți
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline">Privat</Badge>
+                    )}
                   </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-muted-foreground">
+                  Nu ai activități programate pentru astăzi
                 </div>
-                <Badge variant="secondary">12 participanți</Badge>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="h-3 w-3 bg-blue-500 rounded-full"></div>
-                  <div>
-                    <p className="font-medium">Pilates Intermediar</p>
-                    <p className="text-sm text-muted-foreground">
-                      10:30 - 11:30
-                    </p>
-                  </div>
-                </div>
-                <Badge variant="secondary">8 participanți</Badge>
-              </div>
-
-              <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="h-3 w-3 bg-orange-500 rounded-full"></div>
-                  <div>
-                    <p className="font-medium">Personal Training - Ana M.</p>
-                    <p className="text-sm text-muted-foreground">
-                      16:00 - 17:00
-                    </p>
-                  </div>
-                </div>
-                <Badge variant="outline">Privat</Badge>
-              </div>
+              )}
             </CardContent>
-            <CardFooter>
-              <Button variant="outline" className="w-full">
-                <IconPlus className="h-4 w-4 mr-2" />
-                Adaugă activitate
-              </Button>
-            </CardFooter>
           </Card>
         </div>
 
@@ -190,18 +295,17 @@ export default function Page() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center p-4 bg-muted rounded-lg">
-                <span className="text-3xl font-bold text-primary">47</span>
+                <span className="text-3xl font-bold text-primary">
+                  {dashboardData.statistici.membriActivi}
+                </span>
                 <p className="text-sm text-muted-foreground">Membri activi</p>
               </div>
 
               <div className="text-center p-4 bg-muted rounded-lg">
-                <span className="text-3xl font-bold text-primary">156</span>
+                <span className="text-3xl font-bold text-primary">
+                  {dashboardData.statistici.totalClasePredate}
+                </span>
                 <p className="text-sm text-muted-foreground">Clase predate</p>
-              </div>
-
-              <div className="text-center p-4 bg-muted rounded-lg">
-                <span className="text-3xl font-bold text-primary">4.9</span>
-                <p className="text-sm text-muted-foreground">Rating mediu</p>
               </div>
             </CardContent>
           </Card>

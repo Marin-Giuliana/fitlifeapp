@@ -73,57 +73,14 @@ export async function GET(request: NextRequest) {
       { id: 6, name: "Body Pump", color: "bg-green-500" },
     ];
 
-    // Mock data pentru echipamente (în viitor se poate muta într-un model separat)
-    const echipamente = [
-      {
-        id: 1,
-        name: "Banda de alergare Technogym",
-        category: "Cardio",
-        location: "Sala Cardio",
-        status: "functional",
-        lastMaintenance: new Date(2025, 4, 15),
-        nextMaintenance: new Date(2025, 6, 15),
-        purchaseDate: new Date(2023, 2, 10),
-        warranty: new Date(2026, 2, 10),
-        notes: "Funcționează perfect, verificare lunară programată",
-      },
-      {
-        id: 2,
-        name: "Bicicletă spinning Matrix",
-        category: "Cardio",
-        location: "Sala Spinning",
-        status: "maintenance",
-        lastMaintenance: new Date(2025, 5, 1),
-        nextMaintenance: new Date(2025, 7, 1),
-        purchaseDate: new Date(2024, 0, 20),
-        warranty: new Date(2027, 0, 20),
-        notes: "În service - probleme la sistemul de frânare",
-      },
-      {
-        id: 3,
-        name: "Set gantere York 5-50kg",
-        category: "Greutăți libere",
-        location: "Sala Greutăți",
-        status: "functional",
-        lastMaintenance: new Date(2025, 4, 20),
-        nextMaintenance: new Date(2025, 7, 20),
-        purchaseDate: new Date(2022, 5, 5),
-        warranty: new Date(2025, 5, 5),
-        notes: "Set complet, toate greutățile funcționale",
-      },
-      {
-        id: 4,
-        name: "Aparat multifuncțional Hammer",
-        category: "Aparate",
-        location: "Sala Aparate",
-        status: "broken",
-        lastMaintenance: new Date(2025, 3, 10),
-        nextMaintenance: new Date(2025, 6, 10),
-        purchaseDate: new Date(2023, 8, 15),
-        warranty: new Date(2026, 8, 15),
-        notes: "Defect la sistemul de cablu - necesită înlocuire",
-      },
-    ];
+    // Echipamentele se încarcă separat prin API-ul /api/echipamente
+    interface Echipament {
+      _id?: string;
+      nume?: string;
+      status: "functional" | "broken" | "maintenance" | string;
+      [key: string]: unknown;
+    }
+    const echipamente: Echipament[] = [];
 
     // Formatează datele pentru frontend
     const claseFormatate = clase.map(clasa => {

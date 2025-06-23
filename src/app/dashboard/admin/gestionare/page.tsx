@@ -130,81 +130,6 @@ interface GestionareData {
   };
 }
 
-// Mock data for equipment (will be replaced by API data)
-const defaultEquipment = [
-  {
-    id: 1,
-    name: "Banda de alergare Technogym",
-    category: "Cardio",
-    location: "Sala Cardio",
-    status: "functional", // functional, maintenance, broken, retired
-    lastMaintenance: new Date(2025, 4, 15),
-    nextMaintenance: new Date(2025, 6, 15),
-    purchaseDate: new Date(2023, 2, 10),
-    warranty: new Date(2026, 2, 10),
-    notes: "Funcționează perfect, verificare lunară programată",
-  },
-  {
-    id: 2,
-    name: "Bicicletă spinning Matrix",
-    category: "Cardio",
-    location: "Sala Spinning",
-    status: "maintenance",
-    lastMaintenance: new Date(2025, 5, 1),
-    nextMaintenance: new Date(2025, 7, 1),
-    purchaseDate: new Date(2024, 0, 20),
-    warranty: new Date(2027, 0, 20),
-    notes: "În service - probleme la sistemul de frânare",
-  },
-  {
-    id: 3,
-    name: "Set gantere York 5-50kg",
-    category: "Greutăți libere",
-    location: "Sala Greutăți",
-    status: "functional",
-    lastMaintenance: new Date(2025, 4, 20),
-    nextMaintenance: new Date(2025, 7, 20),
-    purchaseDate: new Date(2022, 5, 5),
-    warranty: new Date(2025, 5, 5),
-    notes: "Set complet, toate greutățile funcționale",
-  },
-  {
-    id: 4,
-    name: "Aparat multifuncțional Hammer",
-    category: "Aparate",
-    location: "Sala Aparate",
-    status: "broken",
-    lastMaintenance: new Date(2025, 3, 10),
-    nextMaintenance: new Date(2025, 6, 10),
-    purchaseDate: new Date(2023, 8, 15),
-    warranty: new Date(2026, 8, 15),
-    notes: "Defect la sistemul de cablu - necesită înlocuire",
-  },
-  {
-    id: 5,
-    name: "Colaci TRX (Set 10 buc)",
-    category: "Accesorii",
-    location: "Sala Funcțional",
-    status: "functional",
-    lastMaintenance: new Date(2025, 5, 1),
-    nextMaintenance: new Date(2025, 8, 1),
-    purchaseDate: new Date(2024, 1, 12),
-    warranty: new Date(2026, 1, 12),
-    notes: "Toate colacele în stare bună",
-  },
-  {
-    id: 6,
-    name: "Eliptică Life Fitness",
-    category: "Cardio",
-    location: "Sala Cardio",
-    status: "maintenance",
-    lastMaintenance: new Date(2025, 5, 2),
-    nextMaintenance: new Date(2025, 8, 2),
-    purchaseDate: new Date(2023, 10, 8),
-    warranty: new Date(2026, 10, 8),
-    notes: "Revizie programată - calibrare senzori",
-  },
-];
 
 export default function Page() {
   const { data: session } = useSession();
@@ -225,9 +150,11 @@ export default function Page() {
   const [classDialogOpen, setClassDialogOpen] = useState(false);
   const [equipmentDialogOpen, setEquipmentDialogOpen] = useState(false);
   const [newClassDialogOpen, setNewClassDialogOpen] = useState(false);
+  const [newEquipmentDialogOpen, setNewEquipmentDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("schedule");
 
   // New class form state
   const [newClass, setNewClass] = useState({
@@ -239,6 +166,47 @@ export default function Page() {
     maxParticipants: 20,
     location: "",
   });
+
+  // Fetch equipment data
+  const fetchEquipmentData = useCallback(async () => {
+    try {
+      const response = await fetch("/api/echipamente");
+      if (response.ok) {
+        const data = await response.json();
+        // Updatează echipamentele în gestionareData
+        setGestionareData((prevData) => {
+          if (prevData) {
+            return {
+              ...prevData,
+              echipamente: data.echipamente || [],
+            };
+          }
+          // Dacă nu există date anterioare, creează un obiect minim
+          return {
+            clase: [],
+            antrenori: [],
+            tipuriClase: [],
+            echipamente: data.echipamente || [],
+            perioada: {
+              startDate: new Date().toISOString(),
+              endDate: new Date().toISOString()
+            },
+            statistici: {
+              totalClase: 0,
+              totalParticipanti: 0,
+              echipamenteFunctionale: 0,
+              echipamenteDefecte: 0
+            }
+          };
+        });
+      } else {
+        toast.error("Eroare la încărcarea echipamentelor");
+      }
+    } catch (error) {
+      console.error("Eroare la încărcarea echipamentelor:", error);
+      toast.error("Eroare la încărcarea echipamentelor");
+    }
+  }, []);
 
   // Fetch data function
   const fetchGestionareData = useCallback(async (weekStartParam?: Date) => {
@@ -272,11 +240,24 @@ export default function Page() {
     }
   }, [session, weekStart, fetchGestionareData]);
 
+  // Separate effect for equipment data to ensure it loads immediately
+  useEffect(() => {
+    if (session) {
+      fetchEquipmentData();
+    }
+  }, [session, fetchEquipmentData]);
+
   // Equipment form state
   const [equipmentForm, setEquipmentForm] = useState({
     status: "",
     notes: "",
-    nextMaintenance: "",
+  });
+
+  // New equipment form state
+  const [newEquipment, setNewEquipment] = useState({
+    denumire: "",
+    producator: "",
+    stare: "functional",
   });
 
   // Calculate weekEnd based on weekStart
@@ -319,12 +300,9 @@ export default function Page() {
   };
 
   // Filter equipment
-  const filteredEquipment = (
-    gestionareData?.echipamente || defaultEquipment
-  ).filter((item) => {
+  const filteredEquipment = (gestionareData?.echipamente || []).filter((item) => {
     const matchesSearch =
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.location.toLowerCase().includes(searchTerm.toLowerCase());
+      item.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus =
       statusFilter === "all" || item.status === statusFilter;
     const matchesCategory =
@@ -365,20 +343,114 @@ export default function Page() {
     setEquipmentForm({
       status: item.status,
       notes: item.notes,
-      nextMaintenance: format(item.nextMaintenance, "yyyy-MM-dd"),
     });
     setEquipmentDialogOpen(true);
   };
 
-  const saveEquipmentChanges = () => {
+  const saveEquipmentChanges = async () => {
     if (selectedEquipment) {
-      // In a real app, you would call an API to update equipment
-      console.log("Equipment updated:", {
-        ...selectedEquipment,
-        ...equipmentForm,
+      try {
+        setIsSaving(true);
+        const response = await fetch("/api/echipamente", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: selectedEquipment.id,
+            updates: {
+              stare: mapStatusToBackend(equipmentForm.status),
+            },
+          }),
+        });
+
+        if (response.ok) {
+          toast.success("Echipamentul a fost actualizat cu succes!");
+          setEquipmentDialogOpen(false);
+          setSelectedEquipment(null);
+          fetchEquipmentData(); // Refresh equipment data
+        } else {
+          const errorData = await response.json();
+          toast.error(errorData.message || "Eroare la actualizarea echipamentului");
+        }
+      } catch (error) {
+        console.error("Eroare la actualizarea echipamentului:", error);
+        toast.error("Eroare la actualizarea echipamentului");
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  const saveNewEquipment = async () => {
+    if (newEquipment.denumire) {
+      try {
+        setIsSaving(true);
+        const response = await fetch("/api/echipamente", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...newEquipment,
+            dataAchizitionare: new Date().toISOString(),
+          }),
+        });
+
+        if (response.ok) {
+          toast.success("Echipamentul a fost adăugat cu succes!");
+          setNewEquipmentDialogOpen(false);
+          setNewEquipment({
+            denumire: "",
+            producator: "",
+            stare: "functional",
+          });
+          fetchEquipmentData(); // Refresh equipment data
+        } else {
+          const errorData = await response.json();
+          toast.error(errorData.message || "Eroare la adăugarea echipamentului");
+        }
+      } catch (error) {
+        console.error("Eroare la adăugarea echipamentului:", error);
+        toast.error("Eroare la adăugarea echipamentului");
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  const deleteEquipment = async (equipmentId: string | number) => {
+    try {
+      const response = await fetch(`/api/echipamente?id=${equipmentId}`, {
+        method: "DELETE",
       });
-      setEquipmentDialogOpen(false);
-      setSelectedEquipment(null);
+
+      if (response.ok) {
+        toast.success("Echipamentul a fost șters cu succes!");
+        fetchEquipmentData(); // Refresh equipment data
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || "Eroare la ștergerea echipamentului");
+      }
+    } catch (error) {
+      console.error("Eroare la ștergerea echipamentului:", error);
+      toast.error("Eroare la ștergerea echipamentului");
+    }
+  };
+
+  // Helper function to map status from frontend to backend
+  const mapStatusToBackend = (frontendStatus: string): string => {
+    switch (frontendStatus) {
+      case "functional":
+        return "functional";
+      case "maintenance":
+        return "service";
+      case "broken":
+        return "defect";
+      case "retired":
+        return "defect"; // Map retired to defect for now
+      default:
+        return "functional";
     }
   };
 
@@ -479,11 +551,16 @@ export default function Page() {
     }
   };
 
-  const stats = gestionareData?.statistici || {
-    totalClase: 0,
-    totalParticipanti: 0,
-    echipamenteFunctionale: 0,
-    echipamenteDefecte: 0,
+  // Calculează statisticile dinamic
+  const equipmentStats = gestionareData?.echipamente || [];
+  const echipamenteFunctionale = equipmentStats.filter(e => e.status === "functional").length;
+  const echipamenteDefecte = equipmentStats.filter(e => e.status === "broken" || e.status === "maintenance").length;
+
+  const stats = {
+    totalClase: gestionareData?.statistici?.totalClase || 0,
+    totalParticipanti: gestionareData?.statistici?.totalParticipanti || 0,
+    echipamenteFunctionale,
+    echipamenteDefecte,
   };
 
   return (
@@ -549,11 +626,16 @@ export default function Page() {
           </Card>
         </div>
 
-        <Tabs defaultValue="schedule" className="w-full">
+        <Tabs value={activeTab} onValueChange={(value) => {
+          setActiveTab(value);
+          if (value === "equipment") {
+            fetchEquipmentData();
+          }
+        }} className="w-full">
           <TabsList>
             <TabsTrigger value="schedule">Program săptămânal</TabsTrigger>
             <TabsTrigger value="equipment">
-              Echipamente ({gestionareData.echipamente.length})
+              Echipamente ({gestionareData?.echipamente?.length || 0})
             </TabsTrigger>
           </TabsList>
 
@@ -735,7 +817,7 @@ export default function Page() {
                 <div className="relative">
                   <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Caută echipamente după nume sau locație..."
+                    placeholder="Caută echipamente după nume..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -772,12 +854,20 @@ export default function Page() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <IconTool className="h-5 w-5" /> Inventar echipamente
-                </CardTitle>
-                <CardDescription>
-                  Gestionează și monitorizează statusul echipamentelor din sală
-                </CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <IconTool className="h-5 w-5" /> Inventar echipamente
+                    </CardTitle>
+                    <CardDescription>
+                      Gestionează și monitorizează statusul echipamentelor din sală
+                    </CardDescription>
+                  </div>
+                  <Button onClick={() => setNewEquipmentDialogOpen(true)}>
+                    <IconPlus className="h-4 w-4 mr-1" />
+                    Echipament nou
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {filteredEquipment.length > 0 ? (
@@ -821,26 +911,7 @@ export default function Page() {
                                     <IconAlertTriangle className="h-4 w-4 text-red-600" />
                                   )}
                                 </div>
-                                <p className="text-sm text-muted-foreground mb-2">
-                                  📍 {item.location}
-                                </p>
                                 <div className="text-sm text-muted-foreground">
-                                  <div>
-                                    Última mentenanță:{" "}
-                                    {format(
-                                      item.lastMaintenance,
-                                      "d MMMM yyyy",
-                                      { locale: ro }
-                                    )}
-                                  </div>
-                                  <div>
-                                    Următoarea mentenanță:{" "}
-                                    {format(
-                                      item.nextMaintenance,
-                                      "d MMMM yyyy",
-                                      { locale: ro }
-                                    )}
-                                  </div>
                                   {item.notes && (
                                     <div className="mt-1 italic">
                                       &quot;{item.notes}&quot;
@@ -857,6 +928,14 @@ export default function Page() {
                               >
                                 <IconEdit className="h-4 w-4 mr-1" />
                                 Editează
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700"
+                                onClick={() => deleteEquipment(item.id)}
+                              >
+                                <IconTrash className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>
@@ -996,20 +1075,6 @@ export default function Page() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="nextMaintenance">Următoarea mentenanță</Label>
-                <Input
-                  type="date"
-                  value={equipmentForm.nextMaintenance}
-                  onChange={(e) =>
-                    setEquipmentForm({
-                      ...equipmentForm,
-                      nextMaintenance: e.target.value,
-                    })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="notes">Note</Label>
                 <Textarea
                   value={equipmentForm.notes}
@@ -1033,9 +1098,80 @@ export default function Page() {
             >
               Anulează
             </Button>
-            <Button onClick={saveEquipmentChanges}>
+            <Button onClick={saveEquipmentChanges} disabled={isSaving}>
               <IconCheck className="h-4 w-4 mr-1" />
-              Salvează
+              {isSaving ? "Se salvează..." : "Salvează"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Equipment Dialog */}
+      <Dialog open={newEquipmentDialogOpen} onOpenChange={setNewEquipmentDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adaugă echipament nou</DialogTitle>
+            <DialogDescription>
+              Completează informațiile pentru echipamentul nou
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="denumire">Denumire echipament</Label>
+              <Input
+                value={newEquipment.denumire}
+                onChange={(e) =>
+                  setNewEquipment({ ...newEquipment, denumire: e.target.value })
+                }
+                placeholder="Ex: Bandă de alergare Technogym"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="producator">Producător</Label>
+              <Input
+                value={newEquipment.producator}
+                onChange={(e) =>
+                  setNewEquipment({ ...newEquipment, producator: e.target.value })
+                }
+                placeholder="Ex: Technogym, Matrix, York"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="stare">Starea inițială</Label>
+              <Select
+                value={newEquipment.stare}
+                onValueChange={(value) =>
+                  setNewEquipment({ ...newEquipment, stare: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selectează starea" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="functional">Funcțional</SelectItem>
+                  <SelectItem value="service">În service</SelectItem>
+                  <SelectItem value="defect">Defect</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setNewEquipmentDialogOpen(false)}
+            >
+              Anulează
+            </Button>
+            <Button 
+              onClick={saveNewEquipment} 
+              disabled={!newEquipment.denumire || isSaving}
+            >
+              <IconPlus className="h-4 w-4 mr-1" />
+              {isSaving ? "Se adaugă..." : "Adaugă echipament"}
             </Button>
           </DialogFooter>
         </DialogContent>

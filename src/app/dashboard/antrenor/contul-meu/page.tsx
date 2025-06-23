@@ -4,11 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  IconUser,
-  IconBriefcase,
-  IconAward,
-} from "@tabler/icons-react";
+import { IconUser, IconBriefcase, IconAward } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
@@ -19,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Form,

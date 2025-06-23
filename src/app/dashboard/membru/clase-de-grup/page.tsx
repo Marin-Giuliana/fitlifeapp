@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   format,
@@ -110,43 +110,43 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState("list");
   const { data: session } = useSession();
 
-  const fetchClaseData = async (weekStartParam?: Date) => {
-    try {
-      setIsLoading(true);
-      const searchDate = weekStartParam || weekStart;
-      const weekStartISO = searchDate.toISOString();
+  const fetchClaseData = useCallback(
+    async (weekStartParam?: Date) => {
+      try {
+        setIsLoading(true);
+        const searchDate = weekStartParam || weekStart;
+        const weekStartISO = searchDate.toISOString();
 
-      const response = await fetch(
-        `/api/membru/clase?weekStart=${weekStartISO}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setClaseData(data);
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.error || "Eroare la încărcarea claselor");
+        const response = await fetch(
+          `/api/membru/clase?weekStart=${weekStartISO}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setClaseData(data);
+        } else {
+          const errorData = await response.json();
+          toast.error(errorData.error || "Eroare la încărcarea claselor");
+        }
+      } catch (error) {
+        console.error("Eroare la încărcarea claselor:", error);
+        toast.error("Eroare la încărcarea claselor");
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Eroare la încărcarea claselor:", error);
-      toast.error("Eroare la încărcarea claselor");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    [weekStart]
+  );
 
   useEffect(() => {
     if (session) {
       fetchClaseData();
     }
-  }, [session, weekStart]);
+  }, [session, weekStart, fetchClaseData]);
 
-  // Calculate weekEnd based on weekStart
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
 
-  // Generate array of days for the week view
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  // Helper to get class type
   const getClassType = (typeId: number) => {
     if (!claseData) return { name: "Unknown", color: "bg-gray-500" };
     return (
@@ -157,7 +157,6 @@ export default function Page() {
     );
   };
 
-  // Filter classes for selected date
   const getClassesForDate = (date: Date) => {
     if (!claseData) return [];
     return claseData.clase
@@ -185,7 +184,6 @@ export default function Page() {
     setWeekStart(newWeekStart);
   };
 
-  // Handle class enrollment
   const handleEnroll = (classItem: GroupClass) => {
     if (!claseData?.utilizator.areAbonamentValabil) {
       toast.error(
@@ -197,7 +195,6 @@ export default function Page() {
     setDialogOpen(true);
   };
 
-  // Handle class cancellation
   const handleCancel = async (classId: string) => {
     try {
       setIsEnrolling(true);
@@ -228,7 +225,6 @@ export default function Page() {
     }
   };
 
-  // Confirm enrollment
   const confirmEnroll = async () => {
     if (!selectedClass) return;
 
@@ -470,7 +466,6 @@ export default function Page() {
             </Card>
           </TabsContent>
 
-          {/* My Classes */}
           <TabsContent value="my-classes" className="space-y-6 mt-6">
             <Card>
               <CardHeader>
@@ -571,9 +566,9 @@ export default function Page() {
                     <p className="text-muted-foreground">
                       Nu ești înscris la nicio clasă momentan
                     </p>
-                    <Button 
-                      className="mt-4" 
-                      variant="outline" 
+                    <Button
+                      className="mt-4"
+                      variant="outline"
                       onClick={() => setActiveTab("list")}
                     >
                       Descoperă clasele disponibile
@@ -613,13 +608,10 @@ export default function Page() {
                 <div className="flex items-center space-x-2">
                   <IconCalendar className="h-4 w-4 text-muted-foreground" />
                   <span>
-                    {format(
-                      new Date(selectedClass.date),
-                      "d MMMM yyyy",
-                      {
-                        locale: ro,
-                      }
-                    )}, {selectedClass.time}
+                    {format(new Date(selectedClass.date), "d MMMM yyyy", {
+                      locale: ro,
+                    })}
+                    , {selectedClass.time}
                   </span>
                 </div>
 

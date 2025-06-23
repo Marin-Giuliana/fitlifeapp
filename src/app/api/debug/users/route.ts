@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await connectToDatabase();
 
@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Debug error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

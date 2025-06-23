@@ -21,6 +21,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Define Abonament type at top-level so it's available everywhere
+    type Abonament = {
+      status: string;
+      dataSfarsit: string | Date;
+      tipAbonament: string;
+    };
+
     await connectToDatabase();
 
     const { antrenorId, dataSesiune, oraSesiune } = await req.json();
@@ -44,7 +51,8 @@ export async function POST(req: NextRequest) {
     // Skip subscription checks for admin users (for testing purposes)
     if (session.user.role !== "admin") {
       // Check subscription and available sessions
-      const hasValidSubscription = member.membru?.abonamente?.some((ab: any) => 
+
+      const hasValidSubscription = member.membru?.abonamente?.some((ab: Abonament) => 
         ab.status === "valabil" && 
         new Date(ab.dataSfarsit) > new Date() &&
         (ab.tipAbonament === "Premium")
@@ -122,7 +130,7 @@ export async function POST(req: NextRequest) {
 
     // Decrease available PT sessions if not Premium subscription (skip for admin)
     if (session.user.role !== "admin") {
-      const hasValidSubscription = member.membru?.abonamente?.some((ab: any) => 
+      const hasValidSubscription = member.membru?.abonamente?.some((ab: Abonament) => 
         ab.status === "valabil" && 
         new Date(ab.dataSfarsit) > new Date() &&
         (ab.tipAbonament === "Premium")

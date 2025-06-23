@@ -19,7 +19,6 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconClock,
-  IconStar,
   IconHeart,
   IconMessageCircle,
   IconCheck,
@@ -170,21 +169,23 @@ export default function Page() {
     try {
       const url = `/api/membru/personal-trainer/program?antrenorId=${trainerId}&startDate=${start.toISOString()}&endDate=${end.toISOString()}`;
       console.log("Fetching trainer availability:", url);
-      
+
       const response = await fetch(url);
       console.log("Response status:", response.status);
-      
+
       if (response.ok) {
         const data = await response.json();
         console.log("Received data:", data);
         setTrainerAvailability(
-          data.map((item: any) => ({
+          data.map((item: TrainerAvailability) => ({
             ...item,
             date: new Date(item.date),
           }))
         );
       } else {
-        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Unknown error" }));
         console.error("API Error:", response.status, errorData);
         toast.error(`Eroare la încărcarea programului: ${errorData.message}`);
       }
@@ -200,7 +201,7 @@ export default function Page() {
       if (response.ok) {
         const data = await response.json();
         setSessionHistory(
-          data.map((item: any) => ({
+          data.map((item: SessionHistory) => ({
             ...item,
             date: new Date(item.date),
           }))
@@ -219,7 +220,11 @@ export default function Page() {
     const newWeekStart = addDays(weekStart, -7);
     setWeekStart(newWeekStart);
     if (selectedTrainer) {
-      fetchTrainerAvailability(selectedTrainer, newWeekStart, endOfWeek(newWeekStart, { weekStartsOn: 1 }));
+      fetchTrainerAvailability(
+        selectedTrainer,
+        newWeekStart,
+        endOfWeek(newWeekStart, { weekStartsOn: 1 })
+      );
     }
   };
 
@@ -227,7 +232,11 @@ export default function Page() {
     const newWeekStart = addDays(weekStart, 7);
     setWeekStart(newWeekStart);
     if (selectedTrainer) {
-      fetchTrainerAvailability(selectedTrainer, newWeekStart, endOfWeek(newWeekStart, { weekStartsOn: 1 }));
+      fetchTrainerAvailability(
+        selectedTrainer,
+        newWeekStart,
+        endOfWeek(newWeekStart, { weekStartsOn: 1 })
+      );
     }
   };
 
@@ -327,7 +336,7 @@ export default function Page() {
           },
           body: JSON.stringify({
             id: sessionId,
-            updates: { status: "anulata" }
+            updates: { status: "anulata" },
           }),
         });
 
@@ -373,7 +382,9 @@ export default function Page() {
           fetchSessionHistory();
         } else {
           const errorData = await response.json();
-          toast.error(errorData.message || "Eroare la trimiterea feedback-ului");
+          toast.error(
+            errorData.message || "Eroare la trimiterea feedback-ului"
+          );
         }
       } catch (error) {
         console.error("Eroare la trimiterea feedback-ului:", error);
@@ -392,7 +403,6 @@ export default function Page() {
       </div>
     );
   }
-
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -713,7 +723,8 @@ export default function Page() {
                                       ? "Confirmată"
                                       : "Anulată"}
                                 </Badge>
-                                {(session.status === "finalizata" || session.status === "confirmata") &&
+                                {(session.status === "finalizata" ||
+                                  session.status === "confirmata") &&
                                   !session.feedbackGiven && (
                                     <Button
                                       variant="outline"
@@ -899,7 +910,8 @@ export default function Page() {
           <DialogHeader>
             <DialogTitle>Oferă feedback antrenorului</DialogTitle>
             <DialogDescription>
-              Feedbackul tău va ajuta antrenorul să își îmbunătățească serviciile.
+              Feedbackul tău va ajuta antrenorul să își îmbunătățească
+              serviciile.
             </DialogDescription>
           </DialogHeader>
 

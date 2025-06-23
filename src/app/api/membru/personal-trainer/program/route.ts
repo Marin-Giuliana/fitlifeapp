@@ -63,10 +63,15 @@ export async function GET(req: NextRequest) {
   }
 }
 
+type Session = {
+  dataSesiune: string | Date;
+  oraSesiune: string;
+};
+
 function generateTrainerAvailability(
   startDate: Date,
   endDate: Date,
-  existingSessions: any[]
+  existingSessions: Session[]
 ) {
   const availability = [];
   const currentDate = new Date(startDate);

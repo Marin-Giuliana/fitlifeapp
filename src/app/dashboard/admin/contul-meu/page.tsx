@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { IconUpload, IconUser, IconShieldCog } from "@tabler/icons-react";
+import { IconUser, IconShieldCog } from "@tabler/icons-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
@@ -15,7 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -78,7 +78,6 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 type PasswordFormValues = z.infer<typeof passwordFormSchema>;
 
 export default function Page() {
-  const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -197,11 +196,14 @@ export default function Page() {
     }
   }
 
-  const handleAvatarChange = () => {
-    setIsUploading(true);
-    setTimeout(() => {
-      setIsUploading(false);
-    }, 1500);
+  const getInitials = (name: string) => {
+    if (!name) return "??";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   const calculateAge = (birthDate: string) => {
@@ -244,31 +246,10 @@ export default function Page() {
                 <div className="flex flex-col md:flex-row gap-8">
                   <div className="flex flex-col items-center gap-4">
                     <Avatar className="h-32 w-32 border-4 border-primary">
-                      <AvatarImage
-                        src="/avatar-placeholder.png"
-                        alt="Poza profil"
-                      />
                       <AvatarFallback className="text-3xl font-bold">
-                        GP
+                        {getInitials(form.getValues("nume"))}
                       </AvatarFallback>
                     </Avatar>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex items-center gap-2"
-                      disabled={isUploading}
-                      onClick={handleAvatarChange}
-                    >
-                      {isUploading ? (
-                        "Se încarcă..."
-                      ) : (
-                        <>
-                          <IconUpload className="h-4 w-4" />
-                          Schimbă poza
-                        </>
-                      )}
-                    </Button>
                   </div>
 
                   {/* Form section */}

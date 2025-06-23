@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import {
   format,
   addDays,
@@ -54,172 +55,49 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
-// Mock data for user subscription
-const userSubscription = {
-  type: "Premium", // Standard, Standard+, Premium
-  hasExtraSessions: 3, // Number of extra purchased sessions
-  remainingSessions: 2,
-};
+// User subscription interface
+interface UserSubscription {
+  type: string;
+  hasExtraSessions: number;
+  remainingSessions: number;
+}
 
-// Mock data for trainers
-const trainers = [
-  {
-    id: 1,
-    name: "Maria Ionescu",
-    avatar: "/avatar-placeholder.png",
-    specialization: "Fitness General, Crossfit",
-    experience: "5 ani",
-    rating: 4.8,
-    email: "maria.ionescu@fitlife.ro",
-    phone: "+40721123456",
-    description:
-      "Antrenor certificat cu experiență în fitness general și crossfit. Specializat în antrenamente personalizate pentru toate nivelurile.",
-  },
-  {
-    id: 2,
-    name: "Andrei Popescu",
-    avatar: "/avatar-placeholder.png",
-    specialization: "Bodybuilding, Powerlifting",
-    experience: "8 ani",
-    rating: 4.9,
-    email: "andrei.popescu@fitlife.ro",
-    phone: "+40721123457",
-    description:
-      "Expert în bodybuilding și powerlifting. Ajută clienții să-și atingă obiectivele de forță și masă musculară.",
-  },
-  {
-    id: 3,
-    name: "Elena Dumitrescu",
-    avatar: "/avatar-placeholder.png",
-    specialization: "Yoga, Pilates, Wellness",
-    experience: "6 ani",
-    rating: 4.7,
-    email: "elena.dumitrescu@fitlife.ro",
-    phone: "+40721123458",
-    description:
-      "Instructor certificat de yoga și pilates. Se concentrează pe wellness-ul general și echilibrul corp-minte.",
-  },
-  {
-    id: 4,
-    name: "Alexandru Stanescu",
-    avatar: "/avatar-placeholder.png",
-    specialization: "Functional Training, TRX",
-    experience: "4 ani",
-    rating: 4.6,
-    email: "alexandru.stanescu@fitlife.ro",
-    phone: "+40721123459",
-    description:
-      "Specialist în antrenament funcțional și TRX. Ideal pentru îmbunătățirea performanței atletice.",
-  },
-];
+// Trainers interface
+interface Trainer {
+  id: string;
+  name: string;
+  avatar: string;
+  specialization: string;
+  experience: string;
+  rating: number;
+  email: string;
+  phone: string;
+  description: string;
+}
 
-// Mock data for trainer availability (next 4 weeks)
-type TrainerAvailability = {
-  [key: number]: { date: Date; times: string[] }[];
-};
-const trainerAvailability: TrainerAvailability = {
-  1: [
-    { date: new Date(2025, 5, 2), times: ["09:00", "10:00", "15:00", "16:00"] },
-    { date: new Date(2025, 5, 3), times: ["08:00", "09:00", "17:00", "18:00"] },
-    { date: new Date(2025, 5, 4), times: ["10:00", "11:00", "14:00", "15:00"] },
-    { date: new Date(2025, 5, 5), times: ["09:00", "16:00", "17:00"] },
-    { date: new Date(2025, 5, 9), times: ["08:00", "09:00", "15:00", "16:00"] },
-    {
-      date: new Date(2025, 5, 10),
-      times: ["10:00", "11:00", "17:00", "18:00"],
-    },
-    { date: new Date(2025, 5, 11), times: ["09:00", "14:00", "15:00"] },
-    { date: new Date(2025, 5, 12), times: ["08:00", "16:00", "17:00"] },
-  ],
-  2: [
-    { date: new Date(2025, 5, 2), times: ["11:00", "12:00", "17:00", "18:00"] },
-    { date: new Date(2025, 5, 3), times: ["10:00", "11:00", "15:00", "16:00"] },
-    { date: new Date(2025, 5, 4), times: ["08:00", "09:00", "16:00", "17:00"] },
-    { date: new Date(2025, 5, 6), times: ["09:00", "10:00", "14:00", "15:00"] },
-    { date: new Date(2025, 5, 9), times: ["11:00", "12:00", "16:00", "17:00"] },
-    {
-      date: new Date(2025, 5, 10),
-      times: ["08:00", "09:00", "18:00", "19:00"],
-    },
-    {
-      date: new Date(2025, 5, 13),
-      times: ["10:00", "11:00", "15:00", "16:00"],
-    },
-  ],
-  3: [
-    { date: new Date(2025, 5, 2), times: ["07:00", "08:00", "18:00", "19:00"] },
-    { date: new Date(2025, 5, 4), times: ["07:00", "08:00", "15:00", "16:00"] },
-    { date: new Date(2025, 5, 5), times: ["10:00", "11:00", "17:00", "18:00"] },
-    { date: new Date(2025, 5, 6), times: ["07:00", "08:00", "16:00", "17:00"] },
-    { date: new Date(2025, 5, 9), times: ["07:00", "08:00", "18:00", "19:00"] },
-    {
-      date: new Date(2025, 5, 11),
-      times: ["10:00", "11:00", "15:00", "16:00"],
-    },
-    {
-      date: new Date(2025, 5, 12),
-      times: ["07:00", "08:00", "17:00", "18:00"],
-    },
-  ],
-  4: [
-    { date: new Date(2025, 5, 3), times: ["12:00", "13:00", "19:00", "20:00"] },
-    { date: new Date(2025, 5, 4), times: ["12:00", "13:00", "18:00", "19:00"] },
-    { date: new Date(2025, 5, 5), times: ["11:00", "12:00", "18:00", "19:00"] },
-    { date: new Date(2025, 5, 6), times: ["12:00", "13:00", "17:00", "18:00"] },
-    {
-      date: new Date(2025, 5, 10),
-      times: ["12:00", "13:00", "19:00", "20:00"],
-    },
-    {
-      date: new Date(2025, 5, 11),
-      times: ["11:00", "12:00", "18:00", "19:00"],
-    },
-    {
-      date: new Date(2025, 5, 12),
-      times: ["12:00", "13:00", "17:00", "18:00"],
-    },
-  ],
-};
+// Trainer availability interface
+interface TrainerAvailability {
+  date: Date;
+  times: string[];
+}
 
-// Mock data for session history
-const sessionHistory = [
-  {
-    id: 1,
-    trainerId: 1,
-    date: new Date(2025, 4, 20, 10, 0),
-    duration: 60,
-    status: "completed",
-    feedbackGiven: false,
-  },
-  {
-    id: 2,
-    trainerId: 2,
-    date: new Date(2025, 4, 22, 15, 0),
-    duration: 60,
-    status: "completed",
-    feedbackGiven: true,
-  },
-  {
-    id: 3,
-    trainerId: 1,
-    date: new Date(2025, 4, 25, 9, 0),
-    duration: 60,
-    status: "completed",
-    feedbackGiven: false,
-  },
-  {
-    id: 4,
-    trainerId: 3,
-    date: new Date(2025, 4, 28, 18, 0),
-    duration: 60,
-    status: "completed",
-    feedbackGiven: true,
-  },
-];
+// Session history interface
+interface SessionHistory {
+  id: string;
+  trainerId: string;
+  trainerName: string;
+  date: Date;
+  time: string;
+  duration: number;
+  status: string;
+  feedbackGiven: boolean;
+}
 
 export default function Page() {
-  const [selectedTrainer, setSelectedTrainer] = useState<number | null>(null);
+  const { data: session } = useSession();
+  const [selectedTrainer, setSelectedTrainer] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [weekStart, setWeekStart] = useState(
@@ -228,44 +106,140 @@ export default function Page() {
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [carePlanDialogOpen, setCarePlanDialogOpen] = useState(false);
   const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
-  interface Session {
-    id: number;
-    trainerId: number;
-    date: Date;
-    duration: number;
-    status: string;
-    feedbackGiven: boolean;
-  }
-  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [selectedSession, setSelectedSession] = useState<SessionHistory | null>(
+    null
+  );
   const [carePlanTrainer, setCarePlanTrainer] = useState<string>("");
   const [carePlanMessage, setCarePlanMessage] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState("");
 
+  // State for API data
+  const [trainers, setTrainers] = useState<Trainer[]>([]);
+  const [trainerAvailability, setTrainerAvailability] = useState<
+    TrainerAvailability[]
+  >([]);
+  const [sessionHistory, setSessionHistory] = useState<SessionHistory[]>([]);
+  const [userSubscription, setUserSubscription] =
+    useState<UserSubscription | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [bookingLoading, setBookingLoading] = useState(false);
+
   // Calculate weekEnd based on weekStart
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
+
+  // Fetch trainers on component mount
+  useEffect(() => {
+    if (session?.user) {
+      fetchTrainers();
+      fetchSessionHistory();
+      // Mock user subscription - in real app, fetch from user data
+      setUserSubscription({
+        type: "Premium",
+        hasExtraSessions: 3,
+        remainingSessions: 2,
+      });
+    }
+  }, [session]);
+
+  // Fetch trainer availability when trainer is selected
+  useEffect(() => {
+    if (selectedTrainer && session?.user) {
+      fetchTrainerAvailability(selectedTrainer, weekStart, weekEnd);
+    }
+  }, [selectedTrainer]);
+
+  const fetchTrainers = async () => {
+    try {
+      const response = await fetch("/api/membru/personal-trainer/antrenori");
+      if (response.ok) {
+        const data = await response.json();
+        setTrainers(data);
+      }
+    } catch (error) {
+      console.error("Eroare la încărcarea antrenorilor:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTrainerAvailability = async (
+    trainerId: string,
+    start: Date,
+    end: Date
+  ) => {
+    try {
+      const url = `/api/membru/personal-trainer/program?antrenorId=${trainerId}&startDate=${start.toISOString()}&endDate=${end.toISOString()}`;
+      console.log("Fetching trainer availability:", url);
+      
+      const response = await fetch(url);
+      console.log("Response status:", response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log("Received data:", data);
+        setTrainerAvailability(
+          data.map((item: any) => ({
+            ...item,
+            date: new Date(item.date),
+          }))
+        );
+      } else {
+        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        console.error("API Error:", response.status, errorData);
+        toast.error(`Eroare la încărcarea programului: ${errorData.message}`);
+      }
+    } catch (error) {
+      console.error("Network error:", error);
+      toast.error("Eroare de rețea la încărcarea programului antrenorului");
+    }
+  };
+
+  const fetchSessionHistory = async () => {
+    try {
+      const response = await fetch("/api/membru/personal-trainer/istoric");
+      if (response.ok) {
+        const data = await response.json();
+        setSessionHistory(
+          data.map((item: any) => ({
+            ...item,
+            date: new Date(item.date),
+          }))
+        );
+      }
+    } catch (error) {
+      console.error("Eroare la încărcarea istoricului:", error);
+    }
+  };
 
   // Generate array of days for the week view
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
   // Navigation for week view
   const previousWeek = () => {
-    setWeekStart(addDays(weekStart, -7));
+    const newWeekStart = addDays(weekStart, -7);
+    setWeekStart(newWeekStart);
+    if (selectedTrainer) {
+      fetchTrainerAvailability(selectedTrainer, newWeekStart, endOfWeek(newWeekStart, { weekStartsOn: 1 }));
+    }
   };
 
   const nextWeek = () => {
-    setWeekStart(addDays(weekStart, 7));
+    const newWeekStart = addDays(weekStart, 7);
+    setWeekStart(newWeekStart);
+    if (selectedTrainer) {
+      fetchTrainerAvailability(selectedTrainer, newWeekStart, endOfWeek(newWeekStart, { weekStartsOn: 1 }));
+    }
   };
 
   // Get trainer by ID
-  const getTrainer = (id: number) => {
+  const getTrainer = (id: string) => {
     return trainers.find((trainer) => trainer.id === id);
   };
 
   // Get availability for selected trainer and date
-  const getAvailableSlots = (trainerId: number, date: Date) => {
-    const availability = trainerAvailability[trainerId] || [];
-    const dayAvailability = availability.find(
-      (slot: { date: Date; times: string[] }) => isSameDay(slot.date, date)
+  const getAvailableSlots = (trainerId: string, date: Date) => {
+    const dayAvailability = trainerAvailability.find((slot) =>
+      isSameDay(slot.date, date)
     );
     return dayAvailability?.times || [];
   };
@@ -273,32 +247,58 @@ export default function Page() {
   // Check if user can book sessions
   const canBookSessions = () => {
     return (
-      userSubscription.type === "Premium" ||
-      userSubscription.hasExtraSessions > 0
+      userSubscription?.type === "Premium" ||
+      (userSubscription?.hasExtraSessions &&
+        userSubscription.hasExtraSessions > 0)
     );
   };
 
   // Check if user can request care plans
   const canRequestCarePlans = () => {
     return (
-      userSubscription.type === "Standard+" ||
-      userSubscription.type === "Premium"
+      userSubscription?.type === "Standard+" ||
+      userSubscription?.type === "Premium"
     );
   };
 
   // Handle booking confirmation
-  const confirmBooking = () => {
+  const confirmBooking = async () => {
     if (selectedTrainer && selectedDate && selectedTime) {
-      // In a real app, you would call an API to book the session
-      console.log("Booking confirmed:", {
-        trainerId: selectedTrainer,
-        date: selectedDate,
-        time: selectedTime,
-      });
-      setBookingDialogOpen(false);
-      setSelectedTrainer(null);
-      setSelectedDate(null);
-      setSelectedTime(null);
+      setBookingLoading(true);
+      try {
+        const response = await fetch("/api/membru/personal-trainer/rezervare", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            antrenorId: selectedTrainer,
+            dataSesiune: selectedDate.toISOString(),
+            oraSesiune: selectedTime,
+          }),
+        });
+
+        if (response.ok) {
+          // Refresh data
+          fetchSessionHistory();
+          if (selectedTrainer) {
+            fetchTrainerAvailability(selectedTrainer, weekStart, weekEnd);
+          }
+
+          setBookingDialogOpen(false);
+          setSelectedTrainer(null);
+          setSelectedDate(null);
+          setSelectedTime(null);
+        } else {
+          const errorData = await response.json();
+          alert(errorData.message || "Eroare la rezervarea ședinței");
+        }
+      } catch (error) {
+        console.error("Eroare la rezervarea ședinței:", error);
+        alert("Eroare la rezervarea ședinței");
+      } finally {
+        setBookingLoading(false);
+      }
     }
   };
 
@@ -316,19 +316,83 @@ export default function Page() {
     }
   };
 
-  // Handle feedback submission
-  const submitFeedback = () => {
-    if (selectedSession && feedbackMessage) {
-      // In a real app, you would call an API to send feedback
-      console.log("Feedback submitted:", {
-        sessionId: selectedSession.id,
-        message: feedbackMessage,
-      });
-      setFeedbackDialogOpen(false);
-      setSelectedSession(null);
-      setFeedbackMessage("");
+  // Handle session cancellation
+  const cancelSession = async (sessionId: string) => {
+    if (confirm("Sigur doriți să anulați această ședință?")) {
+      try {
+        const response = await fetch("/api/sesiuni-private", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: sessionId,
+            updates: { status: "anulata" }
+          }),
+        });
+
+        if (response.ok) {
+          toast.success("Ședința a fost anulată cu succes!");
+          fetchSessionHistory();
+          // Refresh trainer availability if a trainer is selected
+          if (selectedTrainer) {
+            fetchTrainerAvailability(selectedTrainer, weekStart, weekEnd);
+          }
+        } else {
+          const errorData = await response.json();
+          toast.error(errorData.message || "Eroare la anularea ședinței");
+        }
+      } catch (error) {
+        console.error("Eroare la anularea ședinței:", error);
+        toast.error("Eroare la anularea ședinței");
+      }
     }
   };
+
+  // Handle feedback submission
+  const submitFeedback = async () => {
+    if (selectedSession && feedbackMessage) {
+      try {
+        const response = await fetch("/api/membru/personal-trainer/feedback", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sessionId: selectedSession.id,
+            feedbackMessage: feedbackMessage,
+          }),
+        });
+
+        if (response.ok) {
+          toast.success("Feedback-ul a fost trimis cu succes!");
+          setFeedbackDialogOpen(false);
+          setSelectedSession(null);
+          setFeedbackMessage("");
+          // Refresh session history to update feedback status
+          fetchSessionHistory();
+        } else {
+          const errorData = await response.json();
+          toast.error(errorData.message || "Eroare la trimiterea feedback-ului");
+        }
+      } catch (error) {
+        console.error("Eroare la trimiterea feedback-ului:", error);
+        toast.error("Eroare la trimiterea feedback-ului");
+      }
+    }
+  };
+
+  // Show loading while session is loading
+  if (!session) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="text-center">
+          <p>Se încarcă...</p>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -342,11 +406,15 @@ export default function Page() {
           </div>
 
           <div className="flex items-center space-x-2">
-            <Badge variant="outline">{userSubscription.type}</Badge>
-            {userSubscription.hasExtraSessions > 0 && (
-              <Badge variant="secondary">
-                {userSubscription.remainingSessions} ședințe rămase
-              </Badge>
+            {userSubscription && (
+              <>
+                <Badge variant="outline">{userSubscription.type}</Badge>
+                {userSubscription.hasExtraSessions > 0 && (
+                  <Badge variant="secondary">
+                    {userSubscription.remainingSessions} ședințe rămase
+                  </Badge>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -389,53 +457,47 @@ export default function Page() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {trainers.map((trainer) => (
-                        <Card
-                          key={trainer.id}
-                          className={`cursor-pointer transition-all ${
-                            selectedTrainer === trainer.id
-                              ? "ring-2 ring-primary"
-                              : ""
-                          }`}
-                          onClick={() => setSelectedTrainer(trainer.id)}
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-start space-x-4">
-                              <Avatar className="h-12 w-12">
-                                <AvatarImage
-                                  src={trainer.avatar}
-                                  alt={trainer.name}
-                                />
-                                <AvatarFallback>
-                                  {trainer.name.substring(0, 2)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1">
-                                <h4 className="font-semibold">
-                                  {trainer.name}
-                                </h4>
-                                <p className="text-sm text-muted-foreground">
-                                  {trainer.specialization}
-                                </p>
-                                <div className="flex items-center mt-1">
-                                  <IconStar className="h-4 w-4 text-yellow-500 mr-1" />
-                                  <span className="text-sm">
-                                    {trainer.rating}
-                                  </span>
-                                  <span className="text-sm text-muted-foreground ml-2">
-                                    • {trainer.experience}
-                                  </span>
+                    {loading ? (
+                      <div className="text-center p-8">
+                        <p>Se încarcă antrenorii...</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {trainers.map((trainer) => (
+                          <Card
+                            key={trainer.id}
+                            className={`cursor-pointer transition-all ${
+                              selectedTrainer === trainer.id
+                                ? "ring-2 ring-primary"
+                                : ""
+                            }`}
+                            onClick={() => setSelectedTrainer(trainer.id)}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-start space-x-4">
+                                <Avatar className="h-12 w-12">
+                                  <AvatarImage
+                                    src={trainer.avatar}
+                                    alt={trainer.name}
+                                  />
+                                  <AvatarFallback>
+                                    {trainer.name.substring(0, 2)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                  <h4 className="font-semibold">
+                                    {trainer.name}
+                                  </h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    {trainer.specialization}
+                                  </p>
                                 </div>
                               </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground mt-3">
-                              {trainer.description}
-                            </p>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -583,7 +645,11 @@ export default function Page() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {sessionHistory.length > 0 ? (
+                {loading ? (
+                  <div className="text-center p-8">
+                    <p>Se încarcă istoricul...</p>
+                  </div>
+                ) : sessionHistory.length > 0 ? (
                   <div className="space-y-4">
                     {sessionHistory.map((session) => {
                       const trainer = getTrainer(session.trainerId);
@@ -595,15 +661,17 @@ export default function Page() {
                                 <Avatar className="h-10 w-10">
                                   <AvatarImage
                                     src={trainer?.avatar}
-                                    alt={trainer?.name}
+                                    alt={trainer?.name || session.trainerName}
                                   />
                                   <AvatarFallback>
-                                    {trainer?.name.substring(0, 2)}
+                                    {(
+                                      trainer?.name || session.trainerName
+                                    ).substring(0, 2)}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div>
                                   <h4 className="font-semibold">
-                                    {trainer?.name}
+                                    {trainer?.name || session.trainerName}
                                   </h4>
                                   <div className="flex items-center mt-1 text-sm text-muted-foreground">
                                     <span>
@@ -613,11 +681,15 @@ export default function Page() {
                                     </span>
                                     <span className="mx-2">•</span>
                                     <span>
-                                      {format(session.date, "HH:mm")} -{" "}
-                                      {format(
-                                        addDays(session.date, 0),
-                                        "HH:mm"
-                                      )}
+                                      {session.time} -{" "}
+                                      {session.time.split(":")[0] === "23"
+                                        ? "00"
+                                        : String(
+                                            parseInt(
+                                              session.time.split(":")[0]
+                                            ) + 1
+                                          ).padStart(2, "0")}
+                                      :{session.time.split(":")[1]}
                                     </span>
                                     <span className="mx-2">•</span>
                                     <span>{session.duration} min</span>
@@ -627,25 +699,42 @@ export default function Page() {
                               <div className="mt-4 md:mt-0 flex items-center space-x-2">
                                 <Badge
                                   variant={
-                                    session.status === "completed"
+                                    session.status === "finalizata"
                                       ? "default"
-                                      : "secondary"
+                                      : session.status === "confirmata"
+                                        ? "secondary"
+                                        : "outline"
                                   }
                                 >
                                   <IconCheck className="h-3 w-3 mr-1" />
-                                  Finalizată
+                                  {session.status === "finalizata"
+                                    ? "Finalizată"
+                                    : session.status === "confirmata"
+                                      ? "Confirmată"
+                                      : "Anulată"}
                                 </Badge>
-                                {!session.feedbackGiven && (
+                                {(session.status === "finalizata" || session.status === "confirmata") &&
+                                  !session.feedbackGiven && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedSession(session);
+                                        setFeedbackDialogOpen(true);
+                                      }}
+                                    >
+                                      <IconMessageCircle className="h-4 w-4 mr-1" />
+                                      Oferă feedback
+                                    </Button>
+                                  )}
+                                {session.status === "confirmata" && (
                                   <Button
-                                    variant="outline"
+                                    variant="destructive"
                                     size="sm"
-                                    onClick={() => {
-                                      setSelectedSession(session);
-                                      setFeedbackDialogOpen(true);
-                                    }}
+                                    onClick={() => cancelSession(session.id)}
                                   >
-                                    <IconMessageCircle className="h-4 w-4 mr-1" />
-                                    Oferă feedback
+                                    <IconX className="h-4 w-4 mr-1" />
+                                    Anulează
                                   </Button>
                                 )}
                                 {session.feedbackGiven && (
@@ -663,7 +752,7 @@ export default function Page() {
                 ) : (
                   <div className="text-center p-8 bg-muted rounded-md">
                     <p className="text-muted-foreground">
-                      Nu ai încă ședințe finalizate cu antrenorii personali
+                      Nu ai încă ședințe cu antrenorii personali
                     </p>
                   </div>
                 )}
@@ -738,7 +827,9 @@ export default function Page() {
             >
               Anulează
             </Button>
-            <Button onClick={confirmBooking}>Confirmă rezervarea</Button>
+            <Button onClick={confirmBooking} disabled={bookingLoading}>
+              {bookingLoading ? "Se rezervă..." : "Confirmă rezervarea"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -808,8 +899,7 @@ export default function Page() {
           <DialogHeader>
             <DialogTitle>Oferă feedback antrenorului</DialogTitle>
             <DialogDescription>
-              Feedbackul tău este anonim și va ajuta antrenorul să își
-              îmbunătățească serviciile.
+              Feedbackul tău va ajuta antrenorul să își îmbunătățească serviciile.
             </DialogDescription>
           </DialogHeader>
 
@@ -819,23 +909,28 @@ export default function Page() {
                 <Avatar className="h-10 w-10">
                   <AvatarImage
                     src={getTrainer(selectedSession.trainerId)?.avatar}
-                    alt={getTrainer(selectedSession.trainerId)?.name}
+                    alt={
+                      getTrainer(selectedSession.trainerId)?.name ||
+                      selectedSession.trainerName
+                    }
                   />
                   <AvatarFallback>
-                    {getTrainer(selectedSession.trainerId)?.name.substring(
-                      0,
-                      2
-                    )}
+                    {(
+                      getTrainer(selectedSession.trainerId)?.name ||
+                      selectedSession.trainerName
+                    ).substring(0, 2)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <div className="font-medium">
-                    {getTrainer(selectedSession.trainerId)?.name}
+                    {getTrainer(selectedSession.trainerId)?.name ||
+                      selectedSession.trainerName}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {format(selectedSession.date, "d MMMM yyyy, HH:mm", {
+                    {format(selectedSession.date, "d MMMM yyyy", {
                       locale: ro,
                     })}
+                    , {selectedSession.time}
                   </div>
                 </div>
               </div>

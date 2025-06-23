@@ -98,6 +98,35 @@ export async function GET(request: NextRequest) {
     const claseFormatate = claseGrup.map(clasa => {
       const tipClasa = tipuriClase.find(tip => tip.name === clasa.tipClasa) || tipuriClase[0];
       
+      // Determină statusul clasei
+      let status = "scheduled";
+      const now = new Date();
+      
+      // Combină data și ora clasei
+      const clasaDateTime = new Date(`${clasa.dataClasa.toISOString().split('T')[0]}T${clasa.oraClasa}:00`);
+      
+      // Adaugă durata clasei (presupunem 60 de minute)
+      const clasaEndTime = new Date(clasaDateTime.getTime() + (60 * 60 * 1000));
+      
+      // Verifică dacă clasa a fost finalizată manual
+      interface Participant {
+        id: string;
+        nume: string;
+        status: string;
+      }
+      const hasAnyPresent = clasa.participanti.some((p: Participant) => p.status === 'prezent');
+      
+      if (hasAnyPresent) {
+        // Dacă a fost finalizată manual
+        status = "completed";
+      } else if (clasaEndTime < now) {
+        // Dacă timpul clasei + durata au trecut, marchează automat ca finalizată
+        status = "completed";
+      } else {
+        // Clasă viitoare sau în desfășurare
+        status = "scheduled";
+      }
+      
       return {
         id: clasa._id,
         type: "group",
@@ -109,26 +138,52 @@ export async function GET(request: NextRequest) {
         duration: 60, // Default 60 minute
         participants: clasa.participanti.length,
         maxParticipants: clasa.nrLocuri,
-        status: "scheduled", // Ar putea fi "completed" sau "cancelled" în funcție de logica aplicației
+        status: status,
         location: "Sala 1" // Default location, se poate adăuga în model în viitor
       };
     });
 
     // Formatează sesiunile private
-    const sesiuniFormatate = sesiuniPrivate.map(sesiune => ({
-      id: sesiune._id,
-      type: "private",
-      date: sesiune.dataSesiune,
-      time: sesiune.oraSesiune,
-      duration: sesiune.durata || 60,
-      status: sesiune.status || "scheduled",
-      client: {
-        id: sesiune.membru.id._id,
-        name: sesiune.membru.nume,
-        avatar: "/avatar-placeholder.png"
-      },
-      location: "Sala PT 1" // Default location pentru sesiuni private
-    }));
+    const sesiuniFormatate = sesiuniPrivate.map(sesiune => {
+      const now = new Date();
+      
+      // Combină data și ora sesiunii
+      const sesiuneDateTime = new Date(`${sesiune.dataSesiune.toISOString().split('T')[0]}T${sesiune.oraSesiune}:00`);
+      
+      // Adaugă durata sesiunii
+      const durata = sesiune.durata || 60; // minute
+      const sesiuneEndTime = new Date(sesiuneDateTime.getTime() + (durata * 60 * 1000));
+      
+      // Mapează statusul din baza de date la statusul din UI
+      let status = "scheduled";
+      if (sesiune.status === "finalizata") {
+        status = "completed";
+      } else if (sesiune.status === "anulata") {
+        status = "cancelled";
+      } else if (sesiune.status === "confirmata") {
+        // Verifică dacă sesiunea + durata au trecut
+        if (sesiuneEndTime < now) {
+          status = "completed";
+        } else {
+          status = "scheduled";
+        }
+      }
+      
+      return {
+        id: sesiune._id,
+        type: "private",
+        date: sesiune.dataSesiune,
+        time: sesiune.oraSesiune,
+        duration: durata,
+        status: status,
+        client: {
+          id: sesiune.membru.id._id,
+          name: sesiune.membru.nume,
+          avatar: "/avatar-placeholder.png"
+        },
+        location: "Sala PT 1" // Default location pentru sesiuni private
+      };
+    });
 
     // Combină toate sesiunile și sortează după dată
     const toateSesiunile = [...claseFormatate, ...sesiuniFormatate]
@@ -219,19 +274,26 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        // Marchează toți participanții ca prezenți
+        // Marchează toți participanții înscriși ca prezenți (pentru a finaliza clasa)
         interface Participant {
           id: string;
           nume: string;
           status: string;
         }
-        clasa.participanti.forEach((participant: Participant) => {
-          if (participant.status === 'inscris') {
-            participant.status = 'prezent';
-          }
-        });
+        
+        // Verifică dacă clasa nu a fost deja finalizată
+        const hasAnyPresent = clasa.participanti.some((p: Participant) => p.status === 'prezent');
+        
+        if (!hasAnyPresent) {
+          // Marchează toți participanții înscriși ca prezenți
+          clasa.participanti.forEach((participant: Participant) => {
+            if (participant.status === 'inscris') {
+              participant.status = 'prezent';
+            }
+          });
 
-        await clasa.save();
+          await clasa.save();
+        }
 
         return NextResponse.json({
           message: "Clasa a fost marcată ca finalizată!"

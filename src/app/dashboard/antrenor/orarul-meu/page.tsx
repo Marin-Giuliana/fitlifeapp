@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import {
   format,
   addDays,
@@ -18,7 +21,6 @@ import {
   IconClock,
   IconUsers,
   IconUser,
-  IconCheck,
 } from "@tabler/icons-react";
 
 import {
@@ -39,183 +41,113 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
-// Mock data for trainer (current logged in trainer)
-// const currentTrainer = {
-//   id: 1,
-//   name: "Maria Ionescu",
-//   avatar: "/avatar-placeholder.png",
-//   specialization: "Fitness General, Crossfit",
-// };
-
-// Mock data for class types
-const classTypes = [
-  { id: 1, name: "Pilates", color: "bg-pink-500" },
-  { id: 2, name: "Yoga", color: "bg-purple-500" },
-  { id: 3, name: "Spinning", color: "bg-blue-500" },
-  { id: 4, name: "Zumba", color: "bg-yellow-500" },
-  { id: 5, name: "Crossfit", color: "bg-red-500" },
-  { id: 6, name: "Body Pump", color: "bg-green-500" },
-];
-
-// Define a type for group and private sessions
-type GroupSession = {
+// Interface definitions
+interface ClassType {
   id: number;
+  name: string;
+  color: string;
+}
+
+interface Client {
+  id: string;
+  name: string;
+  avatar: string;
+}
+
+interface GroupSession {
+  id: string;
   type: "group";
   classTypeId: number;
-  date: Date;
+  classTypeName: string;
+  classTypeColor: string;
+  date: string;
+  time: string;
   duration: number;
   participants: number;
   maxParticipants: number;
   status: "scheduled" | "completed" | "cancelled";
   location: string;
-};
+}
 
-type PrivateSession = {
-  id: number;
+interface PrivateSession {
+  id: string;
   type: "private";
-  date: Date;
+  date: string;
+  time: string;
   duration: number;
   status: "scheduled" | "completed" | "cancelled";
-  client: {
-    id: number;
-    name: string;
-    avatar: string;
-  };
+  client: Client;
   location: string;
-};
+}
 
 type TrainerSession = GroupSession | PrivateSession;
 
-// Mock data for trainer's assigned sessions (group classes + private sessions)
-const trainerSessions: TrainerSession[] = [
-  // Group Classes
-  {
-    id: 1,
-    type: "group",
-    classTypeId: 1,
-    date: new Date(2025, 5, 2, 10, 0),
-    duration: 60,
-    participants: 15,
-    maxParticipants: 20,
-    status: "scheduled", // scheduled, completed, cancelled
-    location: "Sala 1",
-  },
-  {
-    id: 2,
-    type: "group",
-    classTypeId: 5,
-    date: new Date(2025, 5, 2, 15, 0),
-    duration: 60,
-    participants: 12,
-    maxParticipants: 15,
-    status: "scheduled",
-    location: "Sala 2",
-  },
-  {
-    id: 3,
-    type: "group",
-    classTypeId: 1,
-    date: new Date(2025, 5, 3, 9, 0),
-    duration: 60,
-    participants: 18,
-    maxParticipants: 20,
-    status: "completed",
-    location: "Sala 1",
-  },
-  {
-    id: 4,
-    type: "group",
-    classTypeId: 5,
-    date: new Date(2025, 5, 4, 16, 0),
-    duration: 60,
-    participants: 10,
-    maxParticipants: 15,
-    status: "scheduled",
-    location: "Sala 2",
-  },
-  {
-    id: 5,
-    type: "group",
-    classTypeId: 1,
-    date: new Date(2025, 5, 5, 10, 0),
-    duration: 60,
-    participants: 8,
-    maxParticipants: 20,
-    status: "scheduled",
-    location: "Sala 1",
-  },
-  {
-    id: 6,
-    type: "group",
-    classTypeId: 5,
-    date: new Date(2025, 5, 6, 17, 0),
-    duration: 60,
-    participants: 14,
-    maxParticipants: 15,
-    status: "scheduled",
-    location: "Sala 2",
-  },
-
-  // Private Sessions
-  {
-    id: 7,
-    type: "private",
-    date: new Date(2025, 5, 2, 8, 0),
-    duration: 60,
-    status: "scheduled",
-    client: {
-      id: 1,
-      name: "Alexandru Popescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    location: "Sala PT 1",
-  },
-  {
-    id: 8,
-    type: "private",
-    date: new Date(2025, 5, 3, 11, 0),
-    duration: 60,
-    status: "completed",
-    client: {
-      id: 2,
-      name: "Ana Ionescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    location: "Sala PT 2",
-  },
-  {
-    id: 9,
-    type: "private",
-    date: new Date(2025, 5, 4, 9, 0),
-    duration: 60,
-    status: "scheduled",
-    client: {
-      id: 3,
-      name: "Mihai Georgescu",
-      avatar: "/avatar-placeholder.png",
-    },
-    location: "Sala PT 1",
-  },
-];
+interface OrarData {
+  antrenor: {
+    nume: string;
+    email: string;
+    specializari: string[];
+  };
+  sesiuni: TrainerSession[];
+  tipuriClase: ClassType[];
+  perioada: {
+    startDate: string;
+    endDate: string;
+  };
+  statistici: {
+    totalSesiuni: number;
+    sesiuniFinalizate: number;
+    claseGrup: number;
+    sesiuniPrivate: number;
+  };
+}
 
 export default function Page() {
+  const { data: session } = useSession();
+  const [orarData, setOrarData] = useState<OrarData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [weekStart, setWeekStart] = useState(
     startOfWeek(new Date(), { weekStartsOn: 1 })
   );
 
-  const [selectedSession, setSelectedSession] = useState<TrainerSession | null>(
-    null
+  // Fetch data function
+  const fetchOrarData = useCallback(
+    async (weekStartParam?: Date, skipLoading = false) => {
+      try {
+        if (!skipLoading) {
+          setIsLoading(true);
+        }
+        const searchDate = weekStartParam || weekStart;
+        const weekStartISO = searchDate.toISOString();
+
+        const response = await fetch(
+          `/api/antrenor/orar?weekStart=${weekStartISO}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setOrarData(data);
+        } else {
+          const errorData = await response.json();
+          toast.error(errorData.error || "Eroare la încărcarea orarului");
+        }
+      } catch (error) {
+        console.error("Eroare la încărcarea orarului:", error);
+        toast.error("Eroare la încărcarea orarului");
+      } finally {
+        if (!skipLoading) {
+          setIsLoading(false);
+        }
+      }
+    },
+    [weekStart]
   );
-  const [completionDialogOpen, setCompletionDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (session) {
+      fetchOrarData();
+    }
+  }, [session, fetchOrarData]);
 
   // Calculate weekEnd based on weekStart
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
@@ -225,76 +157,67 @@ export default function Page() {
 
   // Navigation for week view
   const previousWeek = () => {
-    setWeekStart(addDays(weekStart, -7));
+    const newWeekStart = addDays(weekStart, -7);
+    setWeekStart(newWeekStart);
+    fetchOrarData(newWeekStart);
   };
 
   const nextWeek = () => {
-    setWeekStart(addDays(weekStart, 7));
+    const newWeekStart = addDays(weekStart, 7);
+    setWeekStart(newWeekStart);
+    fetchOrarData(newWeekStart);
   };
 
   // Get sessions for a specific date
   const getSessionsForDate = (date: Date) => {
-    return trainerSessions
+    if (!orarData) return [];
+    return orarData.sesiuni
       .filter((session) => isSameDay(new Date(session.date), date))
-      .sort((a, b) => a.date.getTime() - b.date.getTime());
+      .sort(
+        (a, b) =>
+          new Date(a.date + " " + a.time).getTime() -
+          new Date(b.date + " " + b.time).getTime()
+      );
   };
 
   // Get class type by ID
   const getClassType = (typeId: number) => {
+    if (!orarData) return { name: "Unknown", color: "bg-gray-500" };
     return (
-      classTypes.find((type) => type.id === typeId) || {
+      orarData.tipuriClase.find((type) => type.id === typeId) || {
         name: "Unknown",
         color: "bg-gray-500",
       }
     );
   };
 
-  // Format time from date
-  const formatTime = (date: Date) => {
-    return format(date, "HH:mm");
+  // Format time from string
+  const formatTime = (time: string) => {
+    return time;
   };
 
-  // Handle session completion
-  const handleCompleteSession = (session: TrainerSession) => {
-    setSelectedSession(session);
-    setCompletionDialogOpen(true);
+  const stats = orarData?.statistici || {
+    totalSesiuni: 0,
+    sesiuniFinalizate: 0,
+    claseGrup: 0,
+    sesiuniPrivate: 0,
   };
 
-  // Confirm session completion
-  const confirmCompletion = () => {
-    if (selectedSession) {
-      // In a real app, you would call an API to mark session as completed
-      console.log("Session completed:", selectedSession);
-      setCompletionDialogOpen(false);
-      setSelectedSession(null);
-    }
-  };
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
 
-  // Get session statistics
-  const getWeekStats = () => {
-    const weekSessions = trainerSessions.filter((session) => {
-      const sessionDate = new Date(session.date);
-      return sessionDate >= weekStart && sessionDate <= weekEnd;
-    });
-
-    const totalSessions = weekSessions.length;
-    const completedSessions = weekSessions.filter(
-      (s) => s.status === "completed"
-    ).length;
-    const groupClasses = weekSessions.filter((s) => s.type === "group").length;
-    const privateSessions = weekSessions.filter(
-      (s) => s.type === "private"
-    ).length;
-
-    return {
-      total: totalSessions,
-      completed: completedSessions,
-      group: groupClasses,
-      private: privateSessions,
-    };
-  };
-
-  const stats = getWeekStats();
+  if (!orarData) {
+    return (
+      <div className="container mx-auto py-8 px-4">
+        <div className="text-center">
+          <p className="text-muted-foreground">
+            Nu s-au putut încărca datele orarului.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -309,9 +232,11 @@ export default function Page() {
 
           <div className="flex items-center space-x-2">
             <Badge variant="outline">
-              {stats.total} ședințe această săptămână
+              {stats.totalSesiuni} ședințe această săptămână
             </Badge>
-            <Badge variant="secondary">{stats.completed} finalizate</Badge>
+            <Badge variant="secondary">
+              {stats.sesiuniFinalizate} finalizate
+            </Badge>
           </div>
         </div>
 
@@ -320,7 +245,7 @@ export default function Page() {
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-primary">
-                {stats.total}
+                {stats.totalSesiuni}
               </div>
               <div className="text-sm text-muted-foreground">Total ședințe</div>
             </CardContent>
@@ -328,7 +253,7 @@ export default function Page() {
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-green-600">
-                {stats.completed}
+                {stats.sesiuniFinalizate}
               </div>
               <div className="text-sm text-muted-foreground">Finalizate</div>
             </CardContent>
@@ -336,7 +261,7 @@ export default function Page() {
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {stats.group}
+                {stats.claseGrup}
               </div>
               <div className="text-sm text-muted-foreground">Clase de grup</div>
             </CardContent>
@@ -344,7 +269,7 @@ export default function Page() {
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-purple-600">
-                {stats.private}
+                {stats.sesiuniPrivate}
               </div>
               <div className="text-sm text-muted-foreground">
                 Ședințe private
@@ -388,7 +313,6 @@ export default function Page() {
                     <TableHead>Detalii</TableHead>
                     <TableHead>Locația</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Acțiuni</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -404,7 +328,7 @@ export default function Page() {
                             </div>
                           </TableCell>
                           <TableCell
-                            colSpan={6}
+                            colSpan={5}
                             className="text-center text-muted-foreground"
                           >
                             Nu ai ședințe programate
@@ -435,8 +359,14 @@ export default function Page() {
                           <TableCell>
                             <div className="flex items-center">
                               <IconClock className="h-4 w-4 mr-1 text-muted-foreground" />
-                              {formatTime(session.date)} -{" "}
-                              {formatTime(addHours(session.date, 1))}
+                              {formatTime(session.time)} -{" "}
+                              {format(
+                                addHours(
+                                  new Date(`2000-01-01T${session.time}`),
+                                  session.duration / 60
+                                ),
+                                "HH:mm"
+                              )}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -509,18 +439,6 @@ export default function Page() {
                                 : "Programată"}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right">
-                            {session.status === "scheduled" && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleCompleteSession(session)}
-                              >
-                                <IconCheck className="h-4 w-4 mr-1" />
-                                Finalizează
-                              </Button>
-                            )}
-                          </TableCell>
                         </TableRow>
                       );
                     });
@@ -531,94 +449,6 @@ export default function Page() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Session Completion Dialog */}
-      <Dialog
-        open={completionDialogOpen}
-        onOpenChange={setCompletionDialogOpen}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Finalizează ședința</DialogTitle>
-            <DialogDescription>
-              Ești pe cale să marchezi această ședință ca finalizată.
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedSession && (
-            <div className="py-4">
-              <div className="space-y-4">
-                <div className="flex items-center space-x-3 p-3 bg-muted rounded-md">
-                  {selectedSession.type === "group" ? (
-                    <div
-                      className={`p-2 rounded-full ${
-                        getClassType(selectedSession.classTypeId).color
-                      } bg-opacity-10`}
-                    >
-                      <IconUsers className="h-5 w-5" />
-                    </div>
-                  ) : (
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage
-                        src={selectedSession.client.avatar}
-                        alt={selectedSession.client.name}
-                      />
-                      <AvatarFallback>
-                        {selectedSession.client.name.substring(0, 2)}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  <div>
-                    <div className="font-medium">
-                      {selectedSession.type === "group"
-                        ? `${
-                            getClassType(selectedSession.classTypeId).name
-                          } - Clasă de grup`
-                        : `Ședință privată - ${selectedSession.client.name}`}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {format(selectedSession.date, "d MMMM yyyy, HH:mm", {
-                        locale: ro,
-                      })}{" "}
-                      • {selectedSession.location}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center space-x-2">
-                    <IconClock className="h-4 w-4 text-muted-foreground" />
-                    <span>Durata: {selectedSession.duration} minute</span>
-                  </div>
-
-                  {selectedSession.type === "group" && (
-                    <div className="flex items-center space-x-2">
-                      <IconUsers className="h-4 w-4 text-muted-foreground" />
-                      <span>
-                        Participanți: {selectedSession.participants}/
-                        {selectedSession.maxParticipants}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setCompletionDialogOpen(false)}
-            >
-              Anulează
-            </Button>
-            <Button onClick={confirmCompletion}>
-              <IconCheck className="h-4 w-4 mr-1" />
-              Confirmă finalizarea
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

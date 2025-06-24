@@ -326,17 +326,28 @@ export default function Page() {
                 <Button
                   variant="outline"
                   className="border-green-200 text-green-700 hover:bg-green-100 hover:text-black"
-                  onClick={() => openSubscriptionDialog("Standard")}
+                  onClick={() => openSubscriptionDialog(abonamentData.abonamentCurent?.tipAbonament || "Standard")}
                 >
                   Renoiesc abonamentul
                 </Button>
-                <Button
-                  variant="outline"
-                  className="border-green-200 text-green-700 hover:bg-green-100 hover:text-black"
-                  onClick={() => openSubscriptionDialog("Premium")}
-                >
-                  Upgrade la Premium
-                </Button>
+                {abonamentData.abonamentCurent?.tipAbonament !== "Premium" && (
+                  <Button
+                    variant="outline"
+                    className="border-green-200 text-green-700 hover:bg-green-100 hover:text-black"
+                    onClick={() => openSubscriptionDialog("Premium")}
+                  >
+                    Upgrade la Premium
+                  </Button>
+                )}
+                {abonamentData.abonamentCurent?.tipAbonament === "Standard" && (
+                  <Button
+                    variant="outline"
+                    className="border-green-200 text-green-700 hover:bg-green-100 hover:text-black"
+                    onClick={() => openSubscriptionDialog("Standard+")}
+                  >
+                    Upgrade la Standard+
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>

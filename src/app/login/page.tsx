@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { getDashboardUrl } from "@/lib/roleRedirect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +25,7 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         redirect: false,
         email,
-        password: parola, // Note: NextAuth still expects 'password' field
+        password: parola,
       });
 
       if (result?.error) {
@@ -33,10 +34,17 @@ export default function LoginPage() {
         return;
       }
 
-      // Redirect to dashboard based on user role
-      // This will be enhanced when we implement role-based redirection
-      router.push("/dashboard/membru");
-      router.refresh();
+      // Get the updated session to access user role
+      const session = await getSession();
+      if (session?.user?.role) {
+        const dashboardUrl = getDashboardUrl(session.user.role);
+        router.push(dashboardUrl);
+        router.refresh();
+      } else {
+        // Fallback to membru dashboard if role is not found
+        router.push("/dashboard/membru");
+        router.refresh();
+      }
     } catch (error) {
       setError("A apărut o eroare neașteptată: " + error);
       setIsLoading(false);
@@ -49,7 +57,7 @@ export default function LoginPage() {
 
     try {
       await signIn("google", {
-        callbackUrl: "/dashboard/membru",
+        callbackUrl: "/auth/callback",
       });
     } catch {
       setError("A apărut o eroare la autentificarea cu Google");

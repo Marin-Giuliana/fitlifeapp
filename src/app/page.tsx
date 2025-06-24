@@ -19,14 +19,31 @@ import Link from "next/link";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { getDashboardUrl } from "@/lib/roleRedirect";
 
 export default function LandingPage() {
   const { setTheme, theme } = useTheme();
+  const { data: session } = useSession();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const getDashboardLink = () => {
+    if (session?.user?.role) {
+      return getDashboardUrl(session.user.role);
+    }
+    return "/login";
+  };
+
+  const getDashboardButtonText = () => {
+    if (session?.user) {
+      return "Intră în cont";
+    }
+    return "Intră în cont!";
+  };
 
   return (
     <div className="min-h-screen">
@@ -88,7 +105,9 @@ export default function LandingPage() {
                 </Button>
               )}
               <Button asChild className="hidden md:inline-flex" size="lg">
-                <Link href="/dashboard/membru">Intră în cont!</Link>
+                <Link href={getDashboardLink()}>
+                  {getDashboardButtonText()}
+                </Link>
               </Button>
               <Button className="md:hidden" variant="ghost" size="icon">
                 <IconMenu2 className="h-5 w-5" />
@@ -781,7 +800,9 @@ export default function LandingPage() {
                 className="text-lg px-8 py-6"
                 asChild
               >
-                <Link href="/dashboard/membru">Ai deja cont?</Link>
+                <Link href={getDashboardLink()}>
+                  {session?.user ? "Intră în cont" : "Ai deja cont?"}
+                </Link>
               </Button>
             </div>
           </div>

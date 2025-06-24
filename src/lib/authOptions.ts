@@ -95,6 +95,16 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // If it's a callback from sign in, redirect based on role
+      if (url.startsWith(baseUrl)) {
+        // This is a relative callback URL
+        return url;
+      }
+      
+      // For external URLs, return base URL
+      return baseUrl;
     }
   },
   pages: {

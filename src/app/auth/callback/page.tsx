@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { getDashboardUrl } from "@/lib/roleRedirect";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function AuthCallback() {
   const { data: session, status } = useSession();
@@ -31,8 +32,7 @@ export default function AuthCallback() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Se încarcă...</p>
+        <LoadingSpinner></LoadingSpinner>
       </div>
     </div>
   );

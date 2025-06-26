@@ -97,14 +97,19 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // If it's a callback from sign in, redirect based on role
-      if (url.startsWith(baseUrl)) {
-        // This is a relative callback URL
+      if (url.includes('/auth/callback')) {
         return url;
       }
       
-      // For external URLs, return base URL
-      return baseUrl;
+      if (url.startsWith(baseUrl) && url !== baseUrl) {
+        return url;
+      }
+      
+      if (url === baseUrl || !url.startsWith(baseUrl)) {
+        return `${baseUrl}/auth/callback`;
+      }
+      
+      return url;
     }
   },
   pages: {

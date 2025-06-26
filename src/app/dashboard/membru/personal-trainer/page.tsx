@@ -55,6 +55,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import Link from "next/link";
 
 // User subscription interface
 interface UserSubscription {
@@ -131,12 +132,7 @@ export default function Page() {
     if (session?.user) {
       fetchTrainers();
       fetchSessionHistory();
-      // Mock user subscription - in real app, fetch from user data
-      setUserSubscription({
-        type: "Premium",
-        hasExtraSessions: 3,
-        remainingSessions: 2,
-      });
+      fetchUserSubscription();
     }
   }, [session]);
 
@@ -212,6 +208,38 @@ export default function Page() {
     }
   };
 
+  const fetchUserSubscription = async () => {
+    try {
+      const response = await fetch("/api/membru/abonament");
+      if (response.ok) {
+        const data = await response.json();
+        // Map the API response to the UserSubscription interface
+        if (data.abonamentCurent) {
+          setUserSubscription({
+            type: data.abonamentCurent.tipAbonament,
+            hasExtraSessions: data.sedintePT?.disponibile || 0,
+            remainingSessions: data.sedintePT?.disponibile || 0,
+          });
+        } else {
+          // No active subscription
+          setUserSubscription({
+            type: "None",
+            hasExtraSessions: 0,
+            remainingSessions: 0,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Eroare la încărcarea abonamentului:", error);
+      // Fallback to no subscription
+      setUserSubscription({
+        type: "None",
+        hasExtraSessions: 0,
+        remainingSessions: 0,
+      });
+    }
+  };
+
   // Generate array of days for the week view
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
@@ -255,18 +283,21 @@ export default function Page() {
 
   // Check if user can book sessions
   const canBookSessions = () => {
+    if (!userSubscription) return false;
+    
     return (
-      userSubscription?.type === "Premium" ||
-      (userSubscription?.hasExtraSessions &&
-        userSubscription.hasExtraSessions > 0)
+      userSubscription.type === "Premium" ||
+      (userSubscription.hasExtraSessions > 0)
     );
   };
 
   // Check if user can request care plans
   const canRequestCarePlans = () => {
+    if (!userSubscription) return false;
+    
     return (
-      userSubscription?.type === "Standard+" ||
-      userSubscription?.type === "Premium"
+      userSubscription.type === "Standard+" ||
+      userSubscription.type === "Premium"
     );
   };
 
@@ -288,8 +319,11 @@ export default function Page() {
         });
 
         if (response.ok) {
+          toast.success("Ședința a fost rezervată cu succes!");
+          
           // Refresh data
           fetchSessionHistory();
+          fetchUserSubscription(); // Refresh subscription data to update PT session count
           if (selectedTrainer) {
             fetchTrainerAvailability(selectedTrainer, weekStart, weekEnd);
           }
@@ -300,11 +334,11 @@ export default function Page() {
           setSelectedTime(null);
         } else {
           const errorData = await response.json();
-          alert(errorData.message || "Eroare la rezervarea ședinței");
+          toast.error(errorData.message || "Eroare la rezervarea ședinței");
         }
       } catch (error) {
         console.error("Eroare la rezervarea ședinței:", error);
-        alert("Eroare la rezervarea ședinței");
+        toast.error("Eroare la rezervarea ședinței");
       } finally {
         setBookingLoading(false);
       }
@@ -469,7 +503,11 @@ export default function Page() {
                     Pentru a rezerva ședințe cu antrenorii personali, ai nevoie
                     de un abonament Premium sau să achiziționezi ședințe extra.
                   </p>
-                  <Button>Upgrade la Premium</Button>
+                  <Button asChild>
+                    <Link href="/dashboard/membru/abonamentul-meu">
+                      Upgrade la Premium
+                    </Link>
+                  </Button>
                 </CardContent>
               </Card>
             ) : (
@@ -635,7 +673,11 @@ export default function Page() {
                     Pentru a solicita planuri alimentare sau de exerciții, ai
                     nevoie de un abonament Standard+ sau Premium.
                   </p>
-                  <Button>Upgrade abonamentul</Button>
+                  <Button asChild>
+                    <Link href="/dashboard/membru/abonamentul-meu">
+                      Upgrade abonamentul
+                    </Link>
+                  </Button>
                 </CardContent>
               </Card>
             ) : (

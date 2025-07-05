@@ -142,14 +142,16 @@ export default function LandingPage() {
                     Înscrie-te acum în clubul FitLife Club!
                   </Link>
                 </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="text-lg px-8 py-6"
-                >
-                  <IconPlayerPlay className="mr-2 h-5 w-5" />
-                  Urmărește video
-                </Button>
+                <a href="https://youtu.be/4-zjQvTDnbw?si=radfkhcnELeekEHm">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="text-lg px-8 py-6"
+                  >
+                    <IconPlayerPlay className="mr-2 h-5 w-5" />
+                    Urmărește video
+                  </Button>
+                </a>
               </div>
             </div>
 
@@ -270,7 +272,7 @@ export default function LandingPage() {
                 noștri te vor ghida pas cu pas către o versiune mai bună a ta.
               </p>
               <Button size="lg" className="text-lg px-8 py-6">
-                Începe acum!
+                <Link href="/register">Începe acum!</Link>
               </Button>
             </div>
           </div>

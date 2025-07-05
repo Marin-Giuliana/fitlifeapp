@@ -166,6 +166,13 @@ async function addAbonament(userId: string, details: AbonamentDetails) {
   );
   console.log('Rezultat adăugare abonament nou:', addResult);
 
+  // Dacă este abonament Premium, adaugă 15 ședințe PT
+  if (tipAbonament === 'Premium') {
+    console.log('Adăugând 15 ședințe PT pentru abonament Premium...');
+    await addSedinteTP(userId, 15);
+    console.log('15 ședințe PT adăugate cu succes pentru abonament Premium!');
+  }
+
   console.log(`Abonament ${tipAbonament} adăugat pentru utilizatorul ${userId}`);
 }
 

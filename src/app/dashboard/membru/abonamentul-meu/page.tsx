@@ -12,6 +12,7 @@ import {
   IconUser,
   IconUserPlus,
   IconPlus,
+  IconUsers,
 } from "@tabler/icons-react";
 
 import {
@@ -136,10 +137,10 @@ export default function Page() {
                   {selectedSubscription === "Standard"
                     ? "150 lei"
                     : selectedSubscription === "Standard+"
-                    ? "250 lei"
-                    : selectedSubscription === "Premium"
-                    ? "400 lei"
-                    : ""}
+                      ? "250 lei"
+                      : selectedSubscription === "Premium"
+                        ? "400 lei"
+                        : ""}
                 </span>
               </div>
             </div>
@@ -209,10 +210,10 @@ export default function Page() {
                   {selectedPTPackage === 1
                     ? "100 lei"
                     : selectedPTPackage === 4
-                    ? "95 lei"
-                    : selectedPTPackage === 8
-                    ? "90 lei"
-                    : ""}
+                      ? "95 lei"
+                      : selectedPTPackage === 8
+                        ? "90 lei"
+                        : ""}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -221,10 +222,10 @@ export default function Page() {
                   {selectedPTPackage === 1
                     ? "100 lei"
                     : selectedPTPackage === 4
-                    ? "380 lei"
-                    : selectedPTPackage === 8
-                    ? "720 lei"
-                    : ""}
+                      ? "380 lei"
+                      : selectedPTPackage === 8
+                        ? "720 lei"
+                        : ""}
                 </span>
               </div>
             </div>
@@ -326,9 +327,13 @@ export default function Page() {
                 <Button
                   variant="outline"
                   className="border-green-200 text-green-700 hover:bg-green-100 hover:text-black"
-                  onClick={() => openSubscriptionDialog(abonamentData.abonamentCurent?.tipAbonament || "Standard")}
+                  onClick={() =>
+                    openSubscriptionDialog(
+                      abonamentData.abonamentCurent?.tipAbonament || "Standard"
+                    )
+                  }
                 >
-                  Renoiesc abonamentul
+                  Reînnoiesc abonamentul
                 </Button>
                 {abonamentData.abonamentCurent?.tipAbonament !== "Premium" && (
                   <Button
@@ -417,6 +422,15 @@ export default function Page() {
                     <IconHeart className="h-4 w-4" /> Plan alimentar/exerciții
                   </span>
                 </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <span className="text-red-500">
+                    <IconX className="h-4 w-4" />
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <IconUsers className="h-4 w-4" /> Ședințe private cu
+                    antrenori
+                  </span>
+                </li>
               </ul>
             </CardContent>
             <CardFooter>
@@ -473,11 +487,20 @@ export default function Page() {
                   </span>
                 </li>
                 <li className="flex items-center gap-2 text-sm">
-                  <span className="text-green-500">
-                    <IconCheck className="h-4 w-4" />
+                  <span className="text-red-500">
+                    <IconX className="h-4 w-4" />
                   </span>
                   <span className="flex items-center gap-1">
                     <IconHeart className="h-4 w-4" /> Plan alimentar/exerciții
+                  </span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <span className="text-red-500">
+                    <IconX className="h-4 w-4" />
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <IconUsers className="h-4 w-4" /> Ședințe private cu
+                    antrenori
                   </span>
                 </li>
               </ul>
@@ -541,6 +564,15 @@ export default function Page() {
                   </span>
                   <span className="flex items-center gap-1">
                     <IconHeart className="h-4 w-4" /> Plan alimentar/exerciții
+                  </span>
+                </li>
+                <li className="flex items-center gap-2 text-sm">
+                  <span className="text-green-500">
+                    <IconCheck className="h-4 w-4" />
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <IconUsers className="h-4 w-4" /> Ședințe private cu
+                    antrenori
                   </span>
                 </li>
               </ul>

@@ -39,10 +39,12 @@ export async function GET(request: NextRequest) {
     }
 
     let areAbonamentValabil = true;
+    let tipAbonament = null;
     if (user.rol === "membru") {
       interface Abonament {
         status: string;
         dataSfarsit: string | Date;
+        tipAbonament: string;
       }
       const abonamentActiv = user.membru?.abonamente?.find(
         (abonament: Abonament) => 
@@ -50,6 +52,11 @@ export async function GET(request: NextRequest) {
           new Date(abonament.dataSfarsit) > new Date()
       );
       areAbonamentValabil = !!abonamentActiv;
+      tipAbonament = abonamentActiv?.tipAbonament || null;
+      
+      // Check if user has access to group classes (Standard+ or Premium)
+      const areAccesClase = tipAbonament === "Standard+" || tipAbonament === "Premium";
+      areAbonamentValabil = areAbonamentValabil && areAccesClase;
     }
 
     const { searchParams } = new URL(request.url);
@@ -148,7 +155,8 @@ export async function GET(request: NextRequest) {
       utilizator: {
         nume: user.nume,
         email: user.email,
-        areAbonamentValabil
+        areAbonamentValabil,
+        tipAbonament
       },
       tipuriClase,
       clase: claseFormatate,

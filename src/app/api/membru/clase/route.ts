@@ -40,7 +40,12 @@ export async function GET(request: NextRequest) {
 
     let areAbonamentValabil = true;
     let tipAbonament = null;
-    if (user.rol === "membru") {
+    
+    // Adminii și antrenorii au acces complet
+    if (user.rol === "admin" || user.rol === "antrenor") {
+      areAbonamentValabil = true;
+      tipAbonament = "Premium"; // Simulează Premium pentru acces complet
+    } else if (user.rol === "membru") {
       interface Abonament {
         status: string;
         dataSfarsit: string | Date;

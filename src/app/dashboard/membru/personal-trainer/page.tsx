@@ -284,17 +284,17 @@ export default function Page() {
   // Check if user can book sessions
   const canBookSessions = () => {
     if (!userSubscription) return false;
-    
+
     return (
       userSubscription.type === "Premium" ||
-      (userSubscription.hasExtraSessions > 0)
+      userSubscription.hasExtraSessions > 0
     );
   };
 
   // Check if user can request care plans
   const canRequestCarePlans = () => {
     if (!userSubscription) return false;
-    
+
     return (
       userSubscription.type === "Standard+" ||
       userSubscription.type === "Premium"
@@ -320,7 +320,7 @@ export default function Page() {
 
         if (response.ok) {
           toast.success("Ședința a fost rezervată cu succes!");
-          
+
           // Refresh data
           fetchSessionHistory();
           fetchUserSubscription(); // Refresh subscription data to update PT session count
@@ -671,11 +671,11 @@ export default function Page() {
                   </h3>
                   <p className="text-muted-foreground mb-4">
                     Pentru a solicita planuri alimentare sau de exerciții, ai
-                    nevoie de un abonament Standard+ sau Premium.
+                    nevoie de un abonament Premium.
                   </p>
                   <Button asChild>
                     <Link href="/dashboard/membru/abonamentul-meu">
-                      Upgrade abonamentul
+                      Upgrade la Premium
                     </Link>
                   </Button>
                 </CardContent>

@@ -34,6 +34,7 @@ type DashboardData = {
     claseSaptamana: number;
     sesiuniProgramate: number;
     totalClasePredate: number;
+    totalPlanuriCreate: number;
     ratingMediu: number;
   };
   activitatiZilei: Array<{
@@ -183,34 +184,35 @@ export default function Page() {
             </CardContent>
           </Card>
         </Link>
+        <Link href="/dashboard/antrenor/orarul-meu">
+          <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-3">
+                <IconUsers className="h-6 w-6 text-primary" /> Membrii mei
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="mb-2">
+                Gestionează sesiunile private
+              </CardDescription>
 
-        <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-3">
-              <IconUsers className="h-6 w-6 text-primary" /> Membrii mei
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CardDescription className="mb-2">
-              Gestionează clienții de personal training și sesiunile private
-            </CardDescription>
-
-            <div className="mt-4 p-2 bg-muted rounded-md text-sm">
-              <div className="flex justify-between mb-1">
-                <span>Membri activi:</span>
-                <span className="font-medium">
-                  {dashboardData.statistici.membriActivi}
-                </span>
+              <div className="mt-4 p-2 bg-muted rounded-md text-sm">
+                <div className="flex justify-between mb-1">
+                  <span>Membri activi:</span>
+                  <span className="font-medium">
+                    {dashboardData.statistici.membriActivi}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Sesiuni programate:</span>
+                  <span className="font-medium">
+                    {dashboardData.statistici.sesiuniProgramate}
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span>Sesiuni programate:</span>
-                <span className="font-medium">
-                  {dashboardData.statistici.sesiuniProgramate}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Link>
 
         <Link href="/dashboard/antrenor/planuri">
           <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
@@ -229,7 +231,9 @@ export default function Page() {
               <div className="mt-4 p-2 bg-muted rounded-md text-sm">
                 <div className="flex justify-between">
                   <span>Planuri create:</span>
-                  <span className="font-medium">0</span>
+                  <span className="font-medium">
+                    {dashboardData.statistici.totalPlanuriCreate}
+                  </span>
                 </div>
               </div>
             </CardContent>

@@ -5,6 +5,7 @@ import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 import Clasa from "@/models/Clasa";
 import SesiunePrivata from "@/models/SesiunePrivata";
+import PlanRequest from "@/models/PlanRequest";
 
 export async function GET() {
   try {
@@ -95,6 +96,12 @@ export async function GET() {
       dataClasa: { $lt: now }
     });
 
+    // Calculează planuri create (folosind aceeași logică ca în pagina de planuri)
+    const totalPlanuriCreate = await PlanRequest.countDocuments({
+      'antrenor.id': session.user.id,
+      status: 'completed'
+    });
+
     // Formatează activitățile zilei
     interface ActivitateGrupa {
       id: string;
@@ -163,6 +170,7 @@ export async function GET() {
         claseSaptamana: claseSaptamana.length,
         sesiuniProgramate: sesiuniProgramate.length,
         totalClasePredate,
+        totalPlanuriCreate,
       },
       activitatiZilei,
       resumeRapid: {

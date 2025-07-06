@@ -274,6 +274,17 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        // Verifică dacă clasa este în viitor
+        const now = new Date();
+        const clasaDateTime = new Date(`${clasa.dataClasa.toISOString().split('T')[0]}T${clasa.oraClasa}:00`);
+        
+        if (clasaDateTime > now) {
+          return NextResponse.json(
+            { error: "Nu poți finaliza clase din viitor" },
+            { status: 400 }
+          );
+        }
+
         // Marchează toți participanții înscriși ca prezenți (pentru a finaliza clasa)
         interface Participant {
           id: string;
@@ -314,6 +325,17 @@ export async function POST(request: NextRequest) {
           return NextResponse.json(
             { error: "Nu ai permisiuni pentru această sesiune" },
             { status: 403 }
+          );
+        }
+
+        // Verifică dacă sesiunea este în viitor
+        const now = new Date();
+        const sesiuneDateTime = new Date(`${sesiune.dataSesiune.toISOString().split('T')[0]}T${sesiune.oraSesiune}:00`);
+        
+        if (sesiuneDateTime > now) {
+          return NextResponse.json(
+            { error: "Nu poți finaliza sesiuni din viitor" },
+            { status: 400 }
           );
         }
 

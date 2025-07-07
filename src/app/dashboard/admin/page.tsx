@@ -25,8 +25,18 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 interface DashboardData {
   admin: {
@@ -114,6 +124,56 @@ export default function Page() {
   }
 
   const { admin, statistici } = dashboardData;
+
+  // Data pentru grafice
+  const genderData = [
+    {
+      name: "Femei",
+      value: statistici.crestereMembriFeminin,
+      percentage: statistici.procentajFemei,
+      fill: "#ec4899",
+    },
+    {
+      name: "Bărbați",
+      value: statistici.crescereMembriMasculin,
+      percentage: statistici.procentajBarbati,
+      fill: "#3b82f6",
+    },
+  ];
+
+  const subscriptionData = [
+    {
+      name: "Standard",
+      value: statistici.abonamenteStandard,
+      amount: statistici.abonamenteStandard * 150,
+      fill: "#10b981",
+    },
+    {
+      name: "Standard+",
+      value: statistici.abonamenteStandardPlus,
+      amount: statistici.abonamenteStandardPlus * 250,
+      fill: "#f59e0b",
+    },
+    {
+      name: "Premium",
+      value: statistici.abonamentePremium,
+      amount: statistici.abonamentePremium * 400,
+      fill: "#8b5cf6",
+    },
+  ];
+
+  const equipmentData = [
+    {
+      name: "Funcționale",
+      value: statistici.echipamenteFunctionale,
+      fill: "#10b981",
+    },
+    {
+      name: "Necesită atenție",
+      value: statistici.echipamenteDefecte,
+      fill: "#ef4444",
+    },
+  ];
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -254,31 +314,80 @@ export default function Page() {
             </CardTitle>
             <CardDescription>Distribuția membrilor pe gen</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Distribuția pe gen */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">Distribuția pe gen</span>
-                <span className="text-sm text-muted-foreground">
-                  {statistici.totalMembri} membri
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-4 bg-pink-50 rounded-lg">
-                  <div className="text-2xl font-bold text-pink-600">
-                    {statistici.procentajFemei}%
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Femei ({statistici.crestereMembriFeminin})
-                  </div>
+          <CardContent>
+            <div className="flex justify-center">
+              <ChartContainer
+                config={{
+                  femei: {
+                    label: "Femei",
+                    color: "#ec4899",
+                  },
+                  barbati: {
+                    label: "Bărbați",
+                    color: "#3b82f6",
+                  },
+                }}
+                className="h-[250px] w-[250px]"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={genderData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {genderData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Pie>
+                    <ChartTooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-background p-2 border rounded shadow">
+                              <p className="font-semibold">{data.name}</p>
+                              <p className="text-sm">Număr: {data.value}</p>
+                              <p className="text-sm">
+                                Procent: {data.percentage}%
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <div className="w-3 h-3 rounded-full bg-pink-500"></div>
+                  <span className="text-sm font-medium">Femei</span>
                 </div>
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {statistici.procentajBarbati}%
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Bărbați ({statistici.crescereMembriMasculin})
-                  </div>
+                <div className="text-xl font-bold text-pink-600">
+                  {statistici.procentajFemei}%
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {statistici.crestereMembriFeminin} membri
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                  <span className="text-sm font-medium">Bărbați</span>
+                </div>
+                <div className="text-xl font-bold text-blue-600">
+                  {statistici.procentajBarbati}%
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  {statistici.crescereMembriMasculin} membri
                 </div>
               </div>
             </div>
@@ -294,8 +403,8 @@ export default function Page() {
             </CardTitle>
             <CardDescription>Abonamente active și venituri</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center p-4 bg-green-50 rounded-lg">
+          <CardContent>
+            <div className="text-center p-4 bg-green-50 rounded-lg mb-4">
               <div className="text-xl font-bold text-green-700">
                 {statistici.venitLunar.toLocaleString()} RON
               </div>
@@ -304,67 +413,55 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Standard (150 RON)</span>
-                <div className="flex items-center gap-2">
-                  <Progress
-                    value={
-                      Math.round(
-                        (statistici.abonamenteStandard /
-                          (statistici.abonamenteStandard +
-                            statistici.abonamenteStandardPlus +
-                            statistici.abonamentePremium)) *
-                          100
-                      ) || 0
-                    }
-                    className="w-20 h-2"
-                  />
-                  <span className="text-sm font-medium">
-                    {statistici.abonamenteStandard}
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Standard+ (250 RON)</span>
-                <div className="flex items-center gap-2">
-                  <Progress
-                    value={
-                      Math.round(
-                        (statistici.abonamenteStandardPlus /
-                          (statistici.abonamenteStandard +
-                            statistici.abonamenteStandardPlus +
-                            statistici.abonamentePremium)) *
-                          100
-                      ) || 0
-                    }
-                    className="w-20 h-2"
-                  />
-                  <span className="text-sm font-medium">
-                    {statistici.abonamenteStandardPlus}
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Premium (400 RON)</span>
-                <div className="flex items-center gap-2">
-                  <Progress
-                    value={
-                      Math.round(
-                        (statistici.abonamentePremium /
-                          (statistici.abonamenteStandard +
-                            statistici.abonamenteStandardPlus +
-                            statistici.abonamentePremium)) *
-                          100
-                      ) || 0
-                    }
-                    className="w-20 h-2"
-                  />
-                  <span className="text-sm font-medium">
-                    {statistici.abonamentePremium}
-                  </span>
-                </div>
-              </div>
+            <div className="flex justify-center">
+              <ChartContainer
+                config={{
+                  value: {
+                    label: "Abonamente",
+                    color: "#8b5cf6",
+                  },
+                }}
+                className="h-[250px] w-full"
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={subscriptionData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <YAxis hide />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={60}>
+                      {subscriptionData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                    <ChartTooltip
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-background p-2 border rounded shadow">
+                              <p className="font-semibold">{label}</p>
+                              <p className="text-sm">
+                                Abonamente: {data.value}
+                              </p>
+                              <p className="text-sm">
+                                Venit: {data.amount.toLocaleString()} RON
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
             </div>
           </CardContent>
         </Card>
@@ -378,8 +475,8 @@ export default function Page() {
             </CardTitle>
             <CardDescription>Monitorizarea inventarului</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
+          <CardContent>
+            <div className="text-center p-4 bg-blue-50 rounded-lg mb-4">
               <div className="text-xl font-bold text-blue-700">
                 {statistici.totalEchipamente}
               </div>
@@ -388,59 +485,90 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-green-600">Funcționale</span>
-                <div className="flex items-center gap-2">
-                  <Progress
-                    value={
-                      Math.round(
-                        (statistici.echipamenteFunctionale /
-                          statistici.totalEchipamente) *
-                          100
-                      ) || 0
-                    }
-                    className="w-20 h-2"
+            <ChartContainer
+              config={{
+                functionale: {
+                  label: "Funcționale",
+                  color: "#10b981",
+                },
+                defecte: {
+                  label: "Necesită atenție",
+                  color: "#ef4444",
+                },
+              }}
+              className="h-[200px]"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={equipmentData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {equipmentData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload;
+                        const percentage = Math.round(
+                          (data.value / statistici.totalEchipamente) * 100
+                        );
+                        return (
+                          <div className="bg-background p-2 border rounded shadow">
+                            <p className="font-semibold">{data.name}</p>
+                            <p className="text-sm">Număr: {data.value}</p>
+                            <p className="text-sm">Procent: {percentage}%</p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
                   />
-                  <span className="text-sm font-medium">
-                    {statistici.echipamenteFunctionale}
-                  </span>
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-red-600">Necesită atenție</span>
-                <div className="flex items-center gap-2">
-                  <Progress
-                    value={
-                      Math.round(
-                        (statistici.echipamenteDefecte /
-                          statistici.totalEchipamente) *
-                          100
-                      ) || 0
-                    }
-                    className="w-20 h-2"
-                  />
-                  <span className="text-sm font-medium">
-                    {statistici.echipamenteDefecte}
-                  </span>
-                </div>
-              </div>
-            </div>
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartContainer>
 
-            <div className="mt-4 p-3 bg-muted rounded-lg">
-              <div className="text-xs text-muted-foreground mb-1">
-                Stare generală
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  <span className="text-sm font-medium">Funcționale</span>
+                </div>
+                <div className="text-lg font-bold text-green-600">
+                  {statistici.echipamenteFunctionale}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {Math.round(
+                    (statistici.echipamenteFunctionale /
+                      statistici.totalEchipamente) *
+                      100
+                  ) || 0}
+                  %
+                </div>
               </div>
-              <div className="text-lg font-bold">
-                {Math.round(
-                  (statistici.echipamenteFunctionale /
-                    statistici.totalEchipamente) *
-                    100
-                ) || 0}
-                %
-              </div>
-              <div className="text-xs text-green-600">
-                echipamente operaționale
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                  <span className="text-sm font-medium">Necesită atenție</span>
+                </div>
+                <div className="text-lg font-bold text-red-600">
+                  {statistici.echipamenteDefecte}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {Math.round(
+                    (statistici.echipamenteDefecte /
+                      statistici.totalEchipamente) *
+                      100
+                  ) || 0}
+                  %
+                </div>
               </div>
             </div>
           </CardContent>

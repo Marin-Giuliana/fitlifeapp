@@ -14,6 +14,7 @@ import {
   IconBriefcase,
   IconCalendar,
   IconBarbell,
+  IconDownload,
 } from "@tabler/icons-react";
 
 import {
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import {
@@ -125,6 +127,33 @@ export default function Page() {
 
   const { admin, statistici } = dashboardData;
 
+  // Function to download Excel report
+  const downloadExcelReport = async () => {
+    try {
+      const response = await fetch("/api/admin/dashboard/export", {
+        method: "GET",
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `raport-${new Date().toISOString().split("T")[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success("Raportul a fost descărcat cu succes!");
+      } else {
+        toast.error("Eroare la descărcarea raportului");
+      }
+    } catch (error) {
+      console.error("Eroare la descărcarea raportului:", error);
+      toast.error("Eroare la descărcarea raportului");
+    }
+  };
+
   // Data pentru grafice
   const genderData = [
     {
@@ -184,16 +213,26 @@ export default function Page() {
             Monitorizează performanța și activitatea FitLife Club
           </p>
         </div>
-        <div className="flex flex-col items-center">
-          <Avatar className="h-24 w-24 border-4 border-primary">
-            <AvatarImage src="/avatar-placeholder.png" alt="Admin" />
-            <AvatarFallback className="text-xl font-bold">
-              {admin.initials}
-            </AvatarFallback>
-          </Avatar>
-          <Badge variant="secondary" className="mt-2 bg-red-100 text-red-800">
-            Administrator
-          </Badge>
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center">
+            <Avatar className="h-24 w-24 border-4 border-primary">
+              <AvatarImage src="/avatar-placeholder.png" alt="Admin" />
+              <AvatarFallback className="text-xl font-bold">
+                {admin.initials}
+              </AvatarFallback>
+            </Avatar>
+            <Badge variant="secondary" className="mt-2 bg-red-100 text-red-800">
+              Administrator
+            </Badge>
+          </div>
+          <Button
+            onClick={downloadExcelReport}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <IconDownload className="h-4 w-4" />
+            Descarcă Raport
+          </Button>
         </div>
       </div>
 

@@ -151,6 +151,7 @@ export default function Page() {
   const [equipmentDialogOpen, setEquipmentDialogOpen] = useState(false);
   const [newClassDialogOpen, setNewClassDialogOpen] = useState(false);
   const [newEquipmentDialogOpen, setNewEquipmentDialogOpen] = useState(false);
+  const [editClassDialogOpen, setEditClassDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -158,6 +159,17 @@ export default function Page() {
 
   // New class form state
   const [newClass, setNewClass] = useState({
+    classTypeId: "",
+    trainerId: "",
+    date: "",
+    time: "",
+    duration: 60,
+    maxParticipants: 20,
+    location: "",
+  });
+
+  // Edit class form state
+  const [editClass, setEditClass] = useState({
     classTypeId: "",
     trainerId: "",
     date: "",
@@ -338,6 +350,21 @@ export default function Page() {
     setClassDialogOpen(true);
   };
 
+  const handleEditClass = (cls: ScheduledClass) => {
+    setSelectedClass(cls);
+    setEditClass({
+      classTypeId: cls.classTypeId.toString(),
+      trainerId: cls.trainerId,
+      date: new Date(cls.date).toISOString().split('T')[0],
+      time: cls.time,
+      duration: cls.duration,
+      maxParticipants: cls.maxParticipants,
+      location: cls.location,
+    });
+    setClassDialogOpen(false);
+    setEditClassDialogOpen(true);
+  };
+
   const handleEditEquipment = (item: Equipment) => {
     setSelectedEquipment(item);
     setEquipmentForm({
@@ -492,6 +519,56 @@ export default function Page() {
       } catch (error) {
         console.error("Eroare la crearea clasei:", error);
         toast.error("Eroare la crearea clasei");
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  const saveEditedClass = async () => {
+    if (
+      selectedClass &&
+      editClass.classTypeId &&
+      editClass.trainerId &&
+      editClass.date &&
+      editClass.time
+    ) {
+      try {
+        setIsSaving(true);
+        const response = await fetch("/api/admin/gestionare", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            clasaId: selectedClass.id,
+            ...editClass,
+            maxParticipants: editClass.maxParticipants,
+          }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          toast.success(result.message);
+          setEditClassDialogOpen(false);
+          setSelectedClass(null);
+          setEditClass({
+            classTypeId: "",
+            trainerId: "",
+            date: "",
+            time: "",
+            duration: 60,
+            maxParticipants: 20,
+            location: "",
+          });
+          fetchGestionareData(); // Refresh data
+        } else {
+          const errorData = await response.json();
+          toast.error(errorData.error || "Eroare la actualizarea clasei");
+        }
+      } catch (error) {
+        console.error("Eroare la actualizarea clasei:", error);
+        toast.error("Eroare la actualizarea clasei");
       } finally {
         setIsSaving(false);
       }
@@ -1034,7 +1111,7 @@ export default function Page() {
             <Button variant="outline" onClick={() => setClassDialogOpen(false)}>
               Închide
             </Button>
-            <Button>
+            <Button onClick={() => selectedClass && handleEditClass(selectedClass)}>
               <IconEdit className="h-4 w-4 mr-1" />
               Editează clasa
             </Button>
@@ -1326,6 +1403,160 @@ export default function Page() {
             >
               <IconPlus className="h-4 w-4 mr-1" />
               {isSaving ? "Se procesează..." : "Programează clasa"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Class Dialog */}
+      <Dialog open={editClassDialogOpen} onOpenChange={setEditClassDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editează clasa</DialogTitle>
+            <DialogDescription>
+              Modifică informațiile clasei existente
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="editClassType">Tipul clasei</Label>
+                <Select
+                  value={editClass.classTypeId}
+                  onValueChange={(value) =>
+                    setEditClass({ ...editClass, classTypeId: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selectează tipul clasei" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {gestionareData.tipuriClase.map((type) => (
+                      <SelectItem key={type.id} value={type.id.toString()}>
+                        <div className="flex items-center space-x-2">
+                          <div
+                            className={`w-3 h-3 rounded-full ${type.color}`}
+                          ></div>
+                          <span>{type.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editTrainer">Antrenor</Label>
+                <Select
+                  value={editClass.trainerId}
+                  onValueChange={(value) =>
+                    setEditClass({ ...editClass, trainerId: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selectează antrenorul" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {gestionareData.antrenori.map((trainer) => (
+                      <SelectItem key={trainer.id} value={trainer.id}>
+                        {trainer.name} - {trainer.specialization}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="editDate">Data</Label>
+                <Input
+                  type="date"
+                  value={editClass.date}
+                  onChange={(e) =>
+                    setEditClass({ ...editClass, date: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editTime">Ora</Label>
+                <Input
+                  type="time"
+                  value={editClass.time}
+                  onChange={(e) =>
+                    setEditClass({ ...editClass, time: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="editDuration">Durata (min)</Label>
+                <Input
+                  type="number"
+                  value={editClass.duration}
+                  onChange={(e) =>
+                    setEditClass({
+                      ...editClass,
+                      duration: parseInt(e.target.value),
+                    })
+                  }
+                  min="30"
+                  max="120"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editMaxParticipants">Max participanți</Label>
+                <Input
+                  type="number"
+                  value={editClass.maxParticipants}
+                  onChange={(e) =>
+                    setEditClass({
+                      ...editClass,
+                      maxParticipants: parseInt(e.target.value),
+                    })
+                  }
+                  min="5"
+                  max="50"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editLocation">Locația</Label>
+                <Input
+                  value={editClass.location}
+                  onChange={(e) =>
+                    setEditClass({ ...editClass, location: e.target.value })
+                  }
+                  placeholder="Ex: Sala 1"
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditClassDialogOpen(false)}
+            >
+              Anulează
+            </Button>
+            <Button
+              onClick={saveEditedClass}
+              disabled={
+                !editClass.classTypeId ||
+                !editClass.trainerId ||
+                !editClass.date ||
+                !editClass.time ||
+                isSaving
+              }
+            >
+              <IconCheck className="h-4 w-4 mr-1" />
+              {isSaving ? "Se salvează..." : "Salvează modificările"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/authOptions";
 import { connectToDatabase } from "@/lib/mongodb";
 import User from "@/models/User";
 import Clasa from "@/models/Clasa";
+import Echipament from "@/models/Echipament";
 
 export async function GET(request: NextRequest) {
   try {
@@ -73,14 +74,36 @@ export async function GET(request: NextRequest) {
       { id: 6, name: "Body Pump", color: "bg-green-500" },
     ];
 
-    // Echipamentele se încarcă separat prin API-ul /api/echipamente
-    interface Echipament {
-      _id?: string;
-      nume?: string;
-      status: "functional" | "broken" | "maintenance" | string;
-      [key: string]: unknown;
-    }
-    const echipamente: Echipament[] = [];
+    // Obține echipamentele
+    const echipamenteRaw = await Echipament.find({}).sort({ denumire: 1 });
+
+    // Mapează statusurile din baza de date la frontend
+    const mapStatusToFrontend = (status: string) => {
+      switch (status) {
+        case "functional":
+          return "functional";
+        case "defect":
+          return "broken";
+        case "service":
+          return "maintenance";
+        default:
+          return "functional";
+      }
+    };
+
+    // Formatează echipamentele pentru frontend
+    const echipamente = echipamenteRaw.map(echipament => ({
+      id: echipament._id,
+      name: echipament.denumire,
+      category: echipament.producator || "Accesorii", // Folosește producator ca și categorie
+      location: "Sala 1", // Default location
+      status: mapStatusToFrontend(echipament.stare),
+      lastMaintenance: echipament.dataAchizitionare, // Folosește data achiziției ca ultima mentenanță
+      nextMaintenance: new Date(echipament.dataAchizitionare.getTime() + 365 * 24 * 60 * 60 * 1000), // +1 an pentru următoarea
+      purchaseDate: echipament.dataAchizitionare,
+      warranty: new Date(echipament.dataAchizitionare.getTime() + 2 * 365 * 24 * 60 * 60 * 1000), // +2 ani pentru garanție
+      notes: `Producător: ${echipament.producator || "Necunoscut"}`
+    }));
 
     // Formatează datele pentru frontend
     const claseFormatate = clase.map(clasa => {

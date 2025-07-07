@@ -23,7 +23,6 @@ import {
   IconPlus,
   IconEdit,
   IconTrash,
-  IconSettings,
   IconAlertTriangle,
   IconCheck,
   IconTool,
@@ -67,7 +66,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 
 // Interface definitions
 interface ClassType {
@@ -129,7 +127,6 @@ interface GestionareData {
     echipamenteDefecte: number;
   };
 }
-
 
 export default function Page() {
   const { data: session } = useSession();
@@ -201,14 +198,14 @@ export default function Page() {
             echipamente: data.echipamente || [],
             perioada: {
               startDate: new Date().toISOString(),
-              endDate: new Date().toISOString()
+              endDate: new Date().toISOString(),
             },
             statistici: {
               totalClase: 0,
               totalParticipanti: 0,
               echipamenteFunctionale: 0,
-              echipamenteDefecte: 0
-            }
+              echipamenteDefecte: 0,
+            },
           };
         });
       } else {
@@ -221,30 +218,33 @@ export default function Page() {
   }, []);
 
   // Fetch data function
-  const fetchGestionareData = useCallback(async (weekStartParam?: Date) => {
-    try {
-      setIsLoading(true);
-      const searchDate = weekStartParam || weekStart;
-      const weekStartISO = searchDate.toISOString();
+  const fetchGestionareData = useCallback(
+    async (weekStartParam?: Date) => {
+      try {
+        setIsLoading(true);
+        const searchDate = weekStartParam || weekStart;
+        const weekStartISO = searchDate.toISOString();
 
-      const response = await fetch(
-        `/api/admin/gestionare?weekStart=${weekStartISO}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Gestionare data:", data); // Debug log
-        setGestionareData(data);
-      } else {
-        const errorData = await response.json();
-        toast.error(errorData.error || "Eroare la încărcarea datelor");
+        const response = await fetch(
+          `/api/admin/gestionare?weekStart=${weekStartISO}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Gestionare data:", data); // Debug log
+          setGestionareData(data);
+        } else {
+          const errorData = await response.json();
+          toast.error(errorData.error || "Eroare la încărcarea datelor");
+        }
+      } catch (error) {
+        console.error("Eroare la încărcarea datelor:", error);
+        toast.error("Eroare la încărcarea datelor");
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Eroare la încărcarea datelor:", error);
-      toast.error("Eroare la încărcarea datelor");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [weekStart]);
+    },
+    [weekStart]
+  );
 
   useEffect(() => {
     if (session) {
@@ -252,12 +252,7 @@ export default function Page() {
     }
   }, [session, weekStart, fetchGestionareData]);
 
-  // Separate effect for equipment data to ensure it loads immediately
-  useEffect(() => {
-    if (session) {
-      fetchEquipmentData();
-    }
-  }, [session, fetchEquipmentData]);
+  // Equipment data is now loaded with main gestionare data
 
   // Equipment form state
   const [equipmentForm, setEquipmentForm] = useState({
@@ -304,7 +299,6 @@ export default function Page() {
     return filtered;
   };
 
-
   // Get trainer by ID
   const getTrainer = (trainerId: string) => {
     if (!gestionareData) return null;
@@ -312,16 +306,19 @@ export default function Page() {
   };
 
   // Filter equipment
-  const filteredEquipment = (gestionareData?.echipamente || []).filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || item.status === statusFilter;
-    const matchesCategory =
-      categoryFilter === "all" || item.category === categoryFilter;
+  const filteredEquipment = (gestionareData?.echipamente || []).filter(
+    (item) => {
+      const matchesSearch = item.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesStatus =
+        statusFilter === "all" || item.status === statusFilter;
+      const matchesCategory =
+        categoryFilter === "all" || item.category === categoryFilter;
 
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
+      return matchesSearch && matchesStatus && matchesCategory;
+    }
+  );
 
   // Format time from string
   const formatTime = (time: string) => {
@@ -355,7 +352,7 @@ export default function Page() {
     setEditClass({
       classTypeId: cls.classTypeId.toString(),
       trainerId: cls.trainerId,
-      date: new Date(cls.date).toISOString().split('T')[0],
+      date: new Date(cls.date).toISOString().split("T")[0],
       time: cls.time,
       duration: cls.duration,
       maxParticipants: cls.maxParticipants,
@@ -369,7 +366,7 @@ export default function Page() {
     setSelectedEquipment(item);
     setEquipmentForm({
       status: item.status,
-      notes: item.notes,
+      notes: "",
     });
     setEquipmentDialogOpen(true);
   };
@@ -395,10 +392,12 @@ export default function Page() {
           toast.success("Echipamentul a fost actualizat cu succes!");
           setEquipmentDialogOpen(false);
           setSelectedEquipment(null);
-          fetchEquipmentData(); // Refresh equipment data
+          fetchGestionareData(); // Refresh data
         } else {
           const errorData = await response.json();
-          toast.error(errorData.message || "Eroare la actualizarea echipamentului");
+          toast.error(
+            errorData.message || "Eroare la actualizarea echipamentului"
+          );
         }
       } catch (error) {
         console.error("Eroare la actualizarea echipamentului:", error);
@@ -435,7 +434,9 @@ export default function Page() {
           fetchEquipmentData(); // Refresh equipment data
         } else {
           const errorData = await response.json();
-          toast.error(errorData.message || "Eroare la adăugarea echipamentului");
+          toast.error(
+            errorData.message || "Eroare la adăugarea echipamentului"
+          );
         }
       } catch (error) {
         console.error("Eroare la adăugarea echipamentului:", error);
@@ -630,8 +631,12 @@ export default function Page() {
 
   // Calculează statisticile dinamic
   const equipmentStats = gestionareData?.echipamente || [];
-  const echipamenteFunctionale = equipmentStats.filter(e => e.status === "functional").length;
-  const echipamenteDefecte = equipmentStats.filter(e => e.status === "broken" || e.status === "maintenance").length;
+  const echipamenteFunctionale = equipmentStats.filter(
+    (e) => e.status === "functional"
+  ).length;
+  const echipamenteDefecte = equipmentStats.filter(
+    (e) => e.status === "broken" || e.status === "maintenance"
+  ).length;
 
   const stats = {
     totalClase: gestionareData?.statistici?.totalClase || 0,
@@ -703,12 +708,7 @@ export default function Page() {
           </Card>
         </div>
 
-        <Tabs value={activeTab} onValueChange={(value) => {
-          setActiveTab(value);
-          if (value === "equipment") {
-            fetchEquipmentData();
-          }
-        }} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList>
             <TabsTrigger value="schedule">Program săptămânal</TabsTrigger>
             <TabsTrigger value="equipment">
@@ -937,7 +937,8 @@ export default function Page() {
                       <IconTool className="h-5 w-5" /> Inventar echipamente
                     </CardTitle>
                     <CardDescription>
-                      Gestionează și monitorizează statusul echipamentelor din sală
+                      Gestionează și monitorizează statusul echipamentelor din
+                      sală
                     </CardDescription>
                   </div>
                   <Button onClick={() => setNewEquipmentDialogOpen(true)}>
@@ -957,26 +958,12 @@ export default function Page() {
                         <CardContent className="p-4">
                           <div className="flex items-start justify-between">
                             <div className="flex items-start space-x-4 flex-1">
-                              <div className="p-3 rounded-full bg-muted">
-                                {item.category === "Cardio" && (
-                                  <IconBarbell className="h-6 w-6" />
-                                )}
-                                {item.category === "Greutăți libere" && (
-                                  <IconBarbell className="h-6 w-6" />
-                                )}
-                                {item.category === "Aparate" && (
-                                  <IconSettings className="h-6 w-6" />
-                                )}
-                                {item.category === "Accesorii" && (
-                                  <IconTool className="h-6 w-6" />
-                                )}
+                              <div className="p-2 rounded-lg bg-primary/10">
+                                <IconBarbell className="h-5 w-5 text-primary" />
                               </div>
                               <div className="flex-1">
                                 <div className="flex items-center gap-2 mb-2">
                                   <h3 className="font-semibold">{item.name}</h3>
-                                  <Badge variant="outline">
-                                    {item.category}
-                                  </Badge>
                                   <Badge
                                     variant={getEquipmentStatusColor(
                                       item.status
@@ -989,10 +976,14 @@ export default function Page() {
                                   )}
                                 </div>
                                 <div className="text-sm text-muted-foreground">
+                                  <div>
+                                    Data achiziție:{" "}
+                                    {new Date(
+                                      item.purchaseDate
+                                    ).toLocaleDateString("ro-RO")}
+                                  </div>
                                   {item.notes && (
-                                    <div className="mt-1 italic">
-                                      &quot;{item.notes}&quot;
-                                    </div>
+                                    <div className="mt-1">{item.notes}</div>
                                   )}
                                 </div>
                               </div>
@@ -1058,13 +1049,10 @@ export default function Page() {
                     {selectedClass.classType.name}
                   </h3>
                   <p className="text-muted-foreground">
-                    {format(
-                      new Date(selectedClass.date),
-                      "d MMMM yyyy",
-                      {
-                        locale: ro,
-                      }
-                    )}, {selectedClass.time}
+                    {format(new Date(selectedClass.date), "d MMMM yyyy", {
+                      locale: ro,
+                    })}
+                    , {selectedClass.time}
                   </p>
                 </div>
               </div>
@@ -1111,7 +1099,9 @@ export default function Page() {
             <Button variant="outline" onClick={() => setClassDialogOpen(false)}>
               Închide
             </Button>
-            <Button onClick={() => selectedClass && handleEditClass(selectedClass)}>
+            <Button
+              onClick={() => selectedClass && handleEditClass(selectedClass)}
+            >
               <IconEdit className="h-4 w-4 mr-1" />
               Editează clasa
             </Button>
@@ -1150,21 +1140,6 @@ export default function Page() {
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Note</Label>
-                <Textarea
-                  value={equipmentForm.notes}
-                  onChange={(e) =>
-                    setEquipmentForm({
-                      ...equipmentForm,
-                      notes: e.target.value,
-                    })
-                  }
-                  placeholder="Adaugă note despre starea echipamentului..."
-                  rows={3}
-                />
-              </div>
             </div>
           )}
 
@@ -1184,7 +1159,10 @@ export default function Page() {
       </Dialog>
 
       {/* New Equipment Dialog */}
-      <Dialog open={newEquipmentDialogOpen} onOpenChange={setNewEquipmentDialogOpen}>
+      <Dialog
+        open={newEquipmentDialogOpen}
+        onOpenChange={setNewEquipmentDialogOpen}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Adaugă echipament nou</DialogTitle>
@@ -1210,7 +1188,10 @@ export default function Page() {
               <Input
                 value={newEquipment.producator}
                 onChange={(e) =>
-                  setNewEquipment({ ...newEquipment, producator: e.target.value })
+                  setNewEquipment({
+                    ...newEquipment,
+                    producator: e.target.value,
+                  })
                 }
                 placeholder="Ex: Technogym, Matrix, York"
               />
@@ -1243,8 +1224,8 @@ export default function Page() {
             >
               Anulează
             </Button>
-            <Button 
-              onClick={saveNewEquipment} 
+            <Button
+              onClick={saveNewEquipment}
               disabled={!newEquipment.denumire || isSaving}
             >
               <IconPlus className="h-4 w-4 mr-1" />

@@ -36,22 +36,22 @@ export async function GET() {
     
     console.log("Statistici de bază:", { totalMembri, antrenoriActivi, totalAdmini });
 
-    // Distribuția pe gen - includem toți userii care au câmpul sex, indiferent de rol
+    // Distribuția pe gen - doar pentru membri
     const genDistribution = await User.aggregate([
-      { $match: { sex: { $exists: true, $nin: [null, ""] } } },
+      { $match: { rol: "membru", sex: { $exists: true, $nin: [null, ""] } } },
       { $group: { _id: "$sex", count: { $sum: 1 } } }
     ]);
     
-    console.log("Distribuție gen din aggregation (toți userii cu sex):", genDistribution);
+    console.log("Distribuție gen din aggregation (doar membri):", genDistribution);
     
     let membriMasculin = 0;
     let membriFeminin = 0;
     
     genDistribution.forEach(item => {
       const sex = item._id;
-      if (sex && (sex.toLowerCase().includes('m') || sex.toLowerCase().includes('masculin') || sex.toLowerCase().includes('barbat'))) {
+      if (sex === 'masculin') {
         membriMasculin += item.count;
-      } else if (sex && (sex.toLowerCase().includes('f') || sex.toLowerCase().includes('feminin') || sex.toLowerCase().includes('femeie'))) {
+      } else if (sex === 'feminin') {
         membriFeminin += item.count;
       }
     });

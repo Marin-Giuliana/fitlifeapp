@@ -9,6 +9,7 @@ import {
   endOfWeek,
   eachDayOfInterval,
   isSameDay,
+  isBefore,
 } from "date-fns";
 import { ro } from "date-fns/locale";
 import {
@@ -308,7 +309,8 @@ export default function Page() {
 
           {/* Week View */}
           <TabsContent value="list" className="space-y-6 mt-6">
-            {(claseData?.utilizator.tipAbonament === "Standard" || claseData?.utilizator.tipAbonament === null) ? (
+            {claseData?.utilizator.tipAbonament === "Standard" ||
+            claseData?.utilizator.tipAbonament === null ? (
               <Card>
                 <CardContent className="p-8 text-center">
                   <IconX className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -316,10 +318,9 @@ export default function Page() {
                     Acces restricționat
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    {claseData?.utilizator.tipAbonament === null 
+                    {claseData?.utilizator.tipAbonament === null
                       ? "Pentru a participa la clasele de grup, ai nevoie de un abonament Standard+ sau Premium."
-                      : "Abonamentul Standard nu include accesul la clasele de grup. Ai nevoie de Standard+ sau Premium."
-                    }
+                      : "Abonamentul Standard nu include accesul la clasele de grup. Ai nevoie de Standard+ sau Premium."}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2 justify-center">
                     {claseData?.utilizator.tipAbonament === null ? (
@@ -468,42 +469,76 @@ export default function Page() {
                                   </div>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                  {cls.enrolled ? (
-                                    <div className="flex items-center justify-end gap-2">
-                                      <Badge variant="secondary">Înscris</Badge>
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => handleCancel(cls.id)}
-                                        disabled={isEnrolling}
-                                      >
-                                        Anulează
-                                      </Button>
-                                    </div>
-                                  ) : (
-                                    <Button
-                                      size="sm"
-                                      variant={
-                                        cls.participants >= cls.maxParticipants
-                                          ? "outline"
-                                          : "default"
-                                      }
-                                      disabled={
-                                        cls.participants >=
-                                          cls.maxParticipants ||
-                                        !claseData.utilizator
-                                          .areAbonamentValabil
-                                      }
-                                      onClick={() => handleEnroll(cls)}
-                                    >
-                                      {cls.participants >= cls.maxParticipants
-                                        ? "Complet"
-                                        : !claseData.utilizator
+                                  {(() => {
+                                    // Check if class time has passed
+                                    const classDateTime = new Date(cls.date);
+                                    const [hours, minutes] = cls.time
+                                      .split(":")
+                                      .map(Number);
+                                    classDateTime.setHours(
+                                      hours,
+                                      minutes,
+                                      0,
+                                      0
+                                    );
+                                    const isClassFinalized = isBefore(
+                                      classDateTime,
+                                      new Date()
+                                    );
+
+                                    if (isClassFinalized) {
+                                      return (
+                                        <Badge variant="outline">
+                                          Finalizată
+                                        </Badge>
+                                      );
+                                    }
+
+                                    if (cls.enrolled) {
+                                      return (
+                                        <div className="flex items-center justify-end gap-2">
+                                          <Badge variant="secondary">
+                                            Înscris
+                                          </Badge>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleCancel(cls.id)}
+                                            disabled={isEnrolling}
+                                          >
+                                            Anulează
+                                          </Button>
+                                        </div>
+                                      );
+                                    } else {
+                                      return (
+                                        <Button
+                                          size="sm"
+                                          variant={
+                                            cls.participants >=
+                                            cls.maxParticipants
+                                              ? "outline"
+                                              : "default"
+                                          }
+                                          disabled={
+                                            cls.participants >=
+                                              cls.maxParticipants ||
+                                            !claseData.utilizator
                                               .areAbonamentValabil
-                                          ? "Abonament necesar"
-                                          : "Înscrie-te"}
-                                    </Button>
-                                  )}
+                                          }
+                                          onClick={() => handleEnroll(cls)}
+                                        >
+                                          {cls.participants >=
+                                          cls.maxParticipants
+                                            ? "Complet"
+                                            : !claseData.utilizator
+                                                  .areAbonamentValabil
+                                              ? "Abonament necesar"
+                                              : "Înscrie-te"}
+                                        </Button>
+                                      );
+                                    }
+                                  })()}
                                 </TableCell>
                               </TableRow>
                             );
@@ -518,7 +553,8 @@ export default function Page() {
           </TabsContent>
 
           <TabsContent value="my-classes" className="space-y-6 mt-6">
-            {(claseData?.utilizator.tipAbonament === "Standard" || claseData?.utilizator.tipAbonament === null) ? (
+            {claseData?.utilizator.tipAbonament === "Standard" ||
+            claseData?.utilizator.tipAbonament === null ? (
               <Card>
                 <CardContent className="p-8 text-center">
                   <IconX className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -526,10 +562,9 @@ export default function Page() {
                     Acces restricționat
                   </h3>
                   <p className="text-muted-foreground mb-4">
-                    {claseData?.utilizator.tipAbonament === null 
+                    {claseData?.utilizator.tipAbonament === null
                       ? "Pentru a participa la clasele de grup, ai nevoie de un abonament Standard+ sau Premium."
-                      : "Abonamentul Standard nu include accesul la clasele de grup. Ai nevoie de Standard+ sau Premium."
-                    }
+                      : "Abonamentul Standard nu include accesul la clasele de grup. Ai nevoie de Standard+ sau Premium."}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2 justify-center">
                     {claseData?.utilizator.tipAbonament === null ? (
@@ -624,32 +659,62 @@ export default function Page() {
                                   </div>
                                 </div>
                                 <div className="mt-4 md:mt-0">
-                                  <Badge
-                                    variant={
-                                      cls.status === "prezent"
-                                        ? "default"
-                                        : cls.status === "anulat"
-                                          ? "destructive"
-                                          : "secondary"
+                                  {(() => {
+                                    // Check if class time has passed
+                                    const classDateTime = new Date(cls.date);
+                                    const [hours, minutes] = cls.time
+                                      .split(":")
+                                      .map(Number);
+                                    classDateTime.setHours(
+                                      hours,
+                                      minutes,
+                                      0,
+                                      0
+                                    );
+                                    const isClassFinalized = isBefore(
+                                      classDateTime,
+                                      new Date()
+                                    );
+
+                                    if (isClassFinalized) {
+                                      return (
+                                        <Badge variant="outline">
+                                          Finalizată
+                                        </Badge>
+                                      );
                                     }
-                                  >
-                                    {cls.status === "inscris"
-                                      ? "Înscris"
-                                      : cls.status === "anulat"
-                                        ? "Anulat"
-                                        : "Prezent"}
-                                  </Badge>
-                                  {cls.status === "inscris" && (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      className="ml-2"
-                                      onClick={() => handleCancel(cls.id)}
-                                      disabled={isEnrolling}
-                                    >
-                                      Anulează
-                                    </Button>
-                                  )}
+
+                                    return (
+                                      <>
+                                        <Badge
+                                          variant={
+                                            cls.status === "prezent"
+                                              ? "default"
+                                              : cls.status === "anulat"
+                                                ? "destructive"
+                                                : "secondary"
+                                          }
+                                        >
+                                          {cls.status === "inscris"
+                                            ? "Înscris"
+                                            : cls.status === "anulat"
+                                              ? "Anulat"
+                                              : "Prezent"}
+                                        </Badge>
+                                        {cls.status === "inscris" && (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="ml-2"
+                                            onClick={() => handleCancel(cls.id)}
+                                            disabled={isEnrolling}
+                                          >
+                                            Anulează
+                                          </Button>
+                                        )}
+                                      </>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             </CardContent>

@@ -23,11 +23,6 @@ export async function POST(request: NextRequest) {
       if (!webhookSecret) {
         event = JSON.parse(body);
       } else {
-        // În producție, validăm signature-ul
-        // const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-        // event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-        
-        // Pentru moment, parsăm direct până configurăm Stripe SDK
         event = JSON.parse(body);
       }
     } catch (err) {

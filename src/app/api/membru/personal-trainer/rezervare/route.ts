@@ -81,8 +81,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check for conflicts
+    // Validate that the session is not in the past
     const sessionDate = new Date(dataSesiune);
+    const [hours, minutes] = oraSesiune.split(':').map(Number);
+    const sessionDateTime = new Date(sessionDate);
+    sessionDateTime.setHours(hours, minutes, 0, 0);
+    
+    if (sessionDateTime <= new Date()) {
+      return NextResponse.json(
+        { message: "Nu poți rezerva o ședință în trecut" },
+        { status: 400 }
+      );
+    }
+    
+    // Check for conflicts
     sessionDate.setHours(0, 0, 0, 0);
     
     const trainerConflict = await SesiunePrivata.findOne({

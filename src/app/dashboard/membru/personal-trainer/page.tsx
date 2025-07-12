@@ -141,7 +141,7 @@ export default function Page() {
     if (selectedTrainer && session?.user) {
       fetchTrainerAvailability(selectedTrainer, weekStart, weekEnd);
     }
-  }, [selectedTrainer]);
+  }, [selectedTrainer, session?.user, weekStart, weekEnd]);
 
   const fetchTrainers = async () => {
     try {
@@ -626,28 +626,41 @@ export default function Page() {
                                 </div>
                               </div>
                               <div className="space-y-1">
-                                {availableSlots.map((time: string) => (
-                                  <Button
-                                    key={time}
-                                    variant={
-                                      selectedDate &&
-                                      isSameDay(selectedDate, day) &&
-                                      selectedTime === time
-                                        ? "default"
-                                        : "outline"
-                                    }
-                                    size="sm"
-                                    className="w-full text-xs"
-                                    disabled={isPast}
-                                    onClick={() => {
-                                      setSelectedDate(day);
-                                      setSelectedTime(time);
-                                      setBookingDialogOpen(true);
-                                    }}
-                                  >
-                                    {time}
-                                  </Button>
-                                ))}
+                                {availableSlots.map((time: string) => {
+                                  const isTimePast =
+                                    isToday &&
+                                    (() => {
+                                      const [hours, minutes] = time
+                                        .split(":")
+                                        .map(Number);
+                                      const slotTime = new Date();
+                                      slotTime.setHours(hours, minutes, 0, 0);
+                                      return isBefore(slotTime, new Date());
+                                    })();
+
+                                  return (
+                                    <Button
+                                      key={time}
+                                      variant={
+                                        selectedDate &&
+                                        isSameDay(selectedDate, day) &&
+                                        selectedTime === time
+                                          ? "default"
+                                          : "outline"
+                                      }
+                                      size="sm"
+                                      className="w-full text-xs"
+                                      disabled={isPast || isTimePast}
+                                      onClick={() => {
+                                        setSelectedDate(day);
+                                        setSelectedTime(time);
+                                        setBookingDialogOpen(true);
+                                      }}
+                                    >
+                                      {time}
+                                    </Button>
+                                  );
+                                })}
                               </div>
                             </div>
                           );

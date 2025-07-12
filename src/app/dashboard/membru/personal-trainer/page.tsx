@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   format,
@@ -123,6 +123,7 @@ export default function Page() {
     useState<UserSubscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [bookingLoading, setBookingLoading] = useState(false);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
 
   // Calculate weekEnd based on weekStart
   const weekEnd = endOfWeek(weekStart, { weekStartsOn: 1 });
@@ -135,13 +136,6 @@ export default function Page() {
       fetchUserSubscription();
     }
   }, [session]);
-
-  // Fetch trainer availability when trainer is selected
-  useEffect(() => {
-    if (selectedTrainer && session?.user) {
-      fetchTrainerAvailability(selectedTrainer, weekStart, weekEnd);
-    }
-  }, [selectedTrainer, session?.user, weekStart, weekEnd]);
 
   const fetchTrainers = async () => {
     try {
@@ -157,39 +151,47 @@ export default function Page() {
     }
   };
 
-  const fetchTrainerAvailability = async (
-    trainerId: string,
-    start: Date,
-    end: Date
-  ) => {
-    try {
-      const url = `/api/membru/personal-trainer/program?antrenorId=${trainerId}&startDate=${start.toISOString()}&endDate=${end.toISOString()}`;
-      console.log("Fetching trainer availability:", url);
+  const fetchTrainerAvailability = useCallback(
+    async (trainerId: string, start: Date, end: Date) => {
+      try {
+        setAvailabilityLoading(true);
+        const url = `/api/membru/personal-trainer/program?antrenorId=${trainerId}&startDate=${start.toISOString()}&endDate=${end.toISOString()}`;
+        console.log("Fetching trainer availability:", url);
 
-      const response = await fetch(url);
-      console.log("Response status:", response.status);
+        const response = await fetch(url);
+        console.log("Response status:", response.status);
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Received data:", data);
-        setTrainerAvailability(
-          data.map((item: TrainerAvailability) => ({
-            ...item,
-            date: new Date(item.date),
-          }))
-        );
-      } else {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: "Unknown error" }));
-        console.error("API Error:", response.status, errorData);
-        toast.error(`Eroare la încărcarea programului: ${errorData.message}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Received data:", data);
+          setTrainerAvailability(
+            data.map((item: TrainerAvailability) => ({
+              ...item,
+              date: new Date(item.date),
+            }))
+          );
+        } else {
+          const errorData = await response
+            .json()
+            .catch(() => ({ message: "Unknown error" }));
+          console.error("API Error:", response.status, errorData);
+          toast.error(`Eroare la încărcarea programului: ${errorData.message}`);
+        }
+      } catch (error) {
+        console.error("Network error:", error);
+        toast.error("Eroare de rețea la încărcarea programului antrenorului");
+      } finally {
+        setAvailabilityLoading(false);
       }
-    } catch (error) {
-      console.error("Network error:", error);
-      toast.error("Eroare de rețea la încărcarea programului antrenorului");
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (selectedTrainer && session?.user && !availabilityLoading) {
+      fetchTrainerAvailability(selectedTrainer, weekStart, weekEnd);
     }
-  };
+  }, [selectedTrainer]);
 
   const fetchSessionHistory = async () => {
     try {
@@ -811,16 +813,40 @@ export default function Page() {
                                       Oferă feedback
                                     </Button>
                                   )}
-                                {session.status === "confirmata" && (
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => cancelSession(session.id)}
-                                  >
-                                    <IconX className="h-4 w-4 mr-1" />
-                                    Anulează
-                                  </Button>
-                                )}
+                                {session.status === "confirmata" &&
+                                  (() => {
+                                    // Check if session time has passed
+                                    const sessionDateTime = new Date(
+                                      session.date
+                                    );
+                                    const [hours, minutes] = session.time
+                                      .split(":")
+                                      .map(Number);
+                                    sessionDateTime.setHours(
+                                      hours,
+                                      minutes,
+                                      0,
+                                      0
+                                    );
+                                    const isSessionPast = isBefore(
+                                      sessionDateTime,
+                                      new Date()
+                                    );
+
+                                    // Only show cancel button if session hasn't passed
+                                    return !isSessionPast ? (
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() =>
+                                          cancelSession(session.id)
+                                        }
+                                      >
+                                        <IconX className="h-4 w-4 mr-1" />
+                                        Anulează
+                                      </Button>
+                                    ) : null;
+                                  })()}
                                 {session.feedbackGiven && (
                                   <Badge variant="secondary">
                                     Feedback trimis

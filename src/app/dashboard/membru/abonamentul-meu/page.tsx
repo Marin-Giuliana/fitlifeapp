@@ -487,8 +487,8 @@ export default function Page() {
                   </span>
                 </li>
                 <li className="flex items-center gap-2 text-sm">
-                  <span className="text-red-500">
-                    <IconX className="h-4 w-4" />
+                  <span className="text-green-500">
+                    <IconCheck className="h-4 w-4" />
                   </span>
                   <span className="flex items-center gap-1">
                     <IconHeart className="h-4 w-4" /> Plan alimentar/exerciții

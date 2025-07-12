@@ -957,7 +957,7 @@ export default function Page() {
                                 </div>
                                 <div className="text-sm text-muted-foreground">
                                   <div>
-                                    Data înregistrare:{" "}
+                                    Data înregistrare echipament:{" "}
                                     {new Date(
                                       item.purchaseDate
                                     ).toLocaleDateString("ro-RO")}
@@ -1301,22 +1301,6 @@ export default function Page() {
 
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="duration">Durata (min)</Label>
-                <Input
-                  type="number"
-                  value={newClass.duration}
-                  onChange={(e) =>
-                    setNewClass({
-                      ...newClass,
-                      duration: parseInt(e.target.value),
-                    })
-                  }
-                  min="30"
-                  max="120"
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="maxParticipants">Max participanți</Label>
                 <Input
                   type="number"
@@ -1335,11 +1319,12 @@ export default function Page() {
               <div className="space-y-2">
                 <Label htmlFor="location">Locația</Label>
                 <Input
+                  disabled
                   value={newClass.location}
                   onChange={(e) =>
                     setNewClass({ ...newClass, location: e.target.value })
                   }
-                  placeholder="Ex: Sala 1"
+                  placeholder="Sala 1"
                 />
               </div>
             </div>
@@ -1454,7 +1439,7 @@ export default function Page() {
             </div>
 
             <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="editDuration">Durata (min)</Label>
                 <Input
                   type="number"
@@ -1468,7 +1453,7 @@ export default function Page() {
                   min="30"
                   max="120"
                 />
-              </div>
+              </div> */}
 
               <div className="space-y-2">
                 <Label htmlFor="editMaxParticipants">Max participanți</Label>
@@ -1489,11 +1474,12 @@ export default function Page() {
               <div className="space-y-2">
                 <Label htmlFor="editLocation">Locația</Label>
                 <Input
+                  disabled
                   value={editClass.location}
                   onChange={(e) =>
                     setEditClass({ ...editClass, location: e.target.value })
                   }
-                  placeholder="Ex: Sala 1"
+                  placeholder="Sala 1"
                 />
               </div>
             </div>

@@ -62,13 +62,14 @@ export async function GET() {
       }
     });
 
-    // Obține sesiunile private de astăzi
+    // Obține sesiunile private de astăzi (exclude cele anulate)
     const sesiuniAstazi = await SesiunePrivata.find({
       'antrenor.id': user._id,
       dataSesiune: {
         $gte: startOfDay,
         $lt: endOfDay
-      }
+      },
+      status: { $ne: 'anulata' }
     })
     .populate('membru.id', 'nume')
     .sort({ oraSesiune: 1 });

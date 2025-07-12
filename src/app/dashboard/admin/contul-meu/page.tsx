@@ -62,10 +62,10 @@ const passwordFormSchema = z
     parolaVeche: z.string().min(1, {
       message: "Parola veche este obligatorie.",
     }),
-    parolaNoua: z.string().min(6, {
-      message: "Parola nouă trebuie să conțină cel puțin 6 caractere.",
+    parolaNoua: z.string().min(8, {
+      message: "Parola nouă trebuie să conțină cel puțin 8 caractere.",
     }),
-    confirmaParola: z.string().min(6, {
+    confirmaParola: z.string().min(8, {
       message: "Confirmarea parolei este obligatorie.",
     }),
   })

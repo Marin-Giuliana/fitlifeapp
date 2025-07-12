@@ -20,6 +20,12 @@ export default function RegisterPage() {
     setIsLoading(true);
     setError("");
 
+    if (parola.length < 8) {
+      setError("Parola trebuie să aibă cel puțin 8 caractere");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/register", {
         method: "POST",

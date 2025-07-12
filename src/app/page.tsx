@@ -139,7 +139,7 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" className="text-lg px-8 py-6" asChild>
                   <Link href="/register">
-                    Înscrie-te acum în clubul FitLife Club!
+                    Înscrie-te acum în clubul FitLife!
                   </Link>
                 </Button>
                 <a href="https://youtu.be/4-zjQvTDnbw?si=radfkhcnELeekEHm">
@@ -395,7 +395,6 @@ export default function LandingPage() {
                     "Evaluare corporală inclusă",
                     "Acces nelimitat la clase de grup",
                     "Ședințe private cu antrenori personali",
-                    "Comunicare constantă cu antrenorii",
                   ].map((feature, index) => (
                     <li key={index} className="flex items-center">
                       <IconCheck className="h-5 w-5 text-green-500 mr-3" />

@@ -38,6 +38,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // validate password length
+    if (parola.length < 8) {
+      return NextResponse.json(
+        { message: "Parola trebuie să aibă cel puțin 8 caractere" },
+        { status: 400 }
+      );
+    }
+
     // connect to database
     await connectToDatabase();
 

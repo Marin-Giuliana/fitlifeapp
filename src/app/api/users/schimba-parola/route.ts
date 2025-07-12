@@ -25,9 +25,9 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    if (parolaNoua.length < 6) {
+    if (parolaNoua.length < 8) {
       return NextResponse.json(
-        { error: "Parola nouă trebuie să aibă cel puțin 6 caractere" },
+        { error: "Parola nouă trebuie să aibă cel puțin 8 caractere" },
         { status: 400 }
       );
     }

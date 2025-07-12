@@ -151,7 +151,6 @@ export default function Page() {
   const [editClassDialogOpen, setEditClassDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [categoryFilter, setCategoryFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("schedule");
 
   // New class form state
@@ -313,10 +312,8 @@ export default function Page() {
         .includes(searchTerm.toLowerCase());
       const matchesStatus =
         statusFilter === "all" || item.status === statusFilter;
-      const matchesCategory =
-        categoryFilter === "all" || item.category === categoryFilter;
 
-      return matchesSearch && matchesStatus && matchesCategory;
+      return matchesSearch && matchesStatus;
     }
   );
 
@@ -960,7 +957,7 @@ export default function Page() {
                                 </div>
                                 <div className="text-sm text-muted-foreground">
                                   <div>
-                                    Data achiziție:{" "}
+                                    Data înregistrare:{" "}
                                     {new Date(
                                       item.purchaseDate
                                     ).toLocaleDateString("ro-RO")}

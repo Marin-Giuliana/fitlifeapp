@@ -472,7 +472,7 @@ export default function Page() {
       case "functional":
         return "functional";
       case "maintenance":
-        return "service";
+        return "maintenance";
       case "broken":
         return "defect";
       case "retired":
@@ -601,8 +601,6 @@ export default function Page() {
         return "Mentenanță";
       case "broken":
         return "Defect";
-      case "retired":
-        return "Retras";
       default:
         return "Unknown";
     }
@@ -910,21 +908,6 @@ export default function Page() {
                   <SelectItem value="functional">Funcțional</SelectItem>
                   <SelectItem value="maintenance">Mentenanță</SelectItem>
                   <SelectItem value="broken">Defect</SelectItem>
-                  <SelectItem value="retired">Retras</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Filtru categorie" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Toate categoriile</SelectItem>
-                  <SelectItem value="Cardio">Cardio</SelectItem>
-                  <SelectItem value="Greutăți libere">
-                    Greutăți libere
-                  </SelectItem>
-                  <SelectItem value="Aparate">Aparate</SelectItem>
-                  <SelectItem value="Accesorii">Accesorii</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1210,7 +1193,7 @@ export default function Page() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="functional">Funcțional</SelectItem>
-                  <SelectItem value="service">În service</SelectItem>
+                  <SelectItem value="maintenance">Mentenanță</SelectItem>
                   <SelectItem value="defect">Defect</SelectItem>
                 </SelectContent>
               </Select>

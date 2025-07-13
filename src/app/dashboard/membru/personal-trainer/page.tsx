@@ -726,7 +726,7 @@ export default function Page() {
                   <IconClock className="h-5 w-5" /> Istoric ședințe
                 </CardTitle>
                 <CardDescription>
-                  Vizualizează ședințele tale finalizate cu antrenorii personali
+                  Vizualizează ședințele tale cu antrenorii personali
                 </CardDescription>
               </CardHeader>
               <CardContent>

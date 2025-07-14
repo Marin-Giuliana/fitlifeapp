@@ -179,7 +179,10 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Check if trainer owns this request (unless admin)
-    if (session.user.role !== "admin" && planRequest.antrenor.id.toString() !== session.user.id) {
+    if (
+      session.user.role !== "admin" &&
+      (!planRequest.antrenor || planRequest.antrenor.id.toString() !== session.user.id)
+    ) {
       return NextResponse.json(
         { message: "Nu aveți permisiunea să modificați această cerere" },
         { status: 403 }
@@ -188,7 +191,7 @@ export async function PATCH(req: NextRequest) {
 
     // Update plan request
     const updates: Record<string, unknown> = {};
-    if (status && ["pending", "in_progress", "completed"].includes(status)) {
+    if (status && ["pending", "in_progress", "completed", "rejected"].includes(status)) {
       updates.status = status;
     }
     if (raspuns !== undefined) {
@@ -199,7 +202,7 @@ export async function PATCH(req: NextRequest) {
     const updatedPlanRequest = await PlanRequest.findByIdAndUpdate(
       id,
       { $set: updates },
-      { new: true, runValidators: true }
+      { new: true, runValidators: false }
     );
 
     return NextResponse.json(updatedPlanRequest);

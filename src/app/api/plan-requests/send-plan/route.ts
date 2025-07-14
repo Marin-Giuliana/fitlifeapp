@@ -45,7 +45,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if trainer owns this request (unless admin)
-    if (session.user.role !== "admin" && planRequest.antrenor.id.toString() !== session.user.id) {
+    if (
+      session.user.role !== "admin" &&
+      (!planRequest.antrenor || planRequest.antrenor.id.toString() !== session.user.id)
+    ) {
       return NextResponse.json(
         { message: "Nu aveți permisiunea să răspundeți la această cerere" },
         { status: 403 }
@@ -62,17 +65,24 @@ export async function POST(req: NextRequest) {
 
     // Send email to member
     try {
+      if (!planRequest.membru || !planRequest.membru.email) {
+        return NextResponse.json(
+          { message: "Membrul nu are o adresă de email asociată" },
+          { status: 400 }
+        );
+      }
+
       await resend.emails.send({
         from: 'FitLife <noreply@fitlifeclub.ro>',
         to: [planRequest.membru.email],
-        subject: `${planTypeText} de la antrenorul ${planRequest.antrenor.nume}`,
+        subject: `${planTypeText} de la antrenorul ${planRequest.antrenor?.nume ?? "necunoscut"}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #2563eb;">${planTypeText} personalizat</h2>
             
             <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="margin-top: 0; color: #1e40af;">Detalii:</h3>
-              <p><strong>Antrenor:</strong> ${planRequest.antrenor.nume}</p>
+              <p><strong>Antrenor:</strong> ${planRequest.antrenor?.nume ?? "necunoscut"}</p>
               <p><strong>Tip plan:</strong> ${planRequest.tipPlan}</p>
               <p><strong>Data cererii:</strong> ${new Date(planRequest.dataCrearii).toLocaleDateString('ro-RO')}</p>
             </div>
@@ -89,7 +99,7 @@ export async function POST(req: NextRequest) {
             
             <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
               <p style="color: #6b7280; font-size: 14px;">
-                Acest plan a fost creat special pentru tine de antrenorul ${planRequest.antrenor.nume}.
+                Acest plan a fost creat special pentru tine de antrenorul ${planRequest.antrenor?.nume ?? "necunoscut"}.
               </p>
               <p style="color: #6b7280; font-size: 14px;">
                 Echipa FitLife

@@ -9,6 +9,7 @@ import {
   IconCheck,
   IconClock,
   IconSend,
+  IconX,
 } from "@tabler/icons-react";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,7 +42,7 @@ interface PlanRequest {
   };
   tipPlan: "alimentar" | "exercitii" | "ambele";
   mesaj: string;
-  status: "pending" | "in_progress" | "completed";
+  status: "pending" | "in_progress" | "completed" | "rejected";
   raspuns: string;
   dataCrearii: string;
   dataRaspunsului?: string;
@@ -140,17 +141,49 @@ export default function PlanRequestsPage() {
     }
   };
 
+  const rejectPlan = async (requestId: string) => {
+    try {
+      setSending(true);
+      const response = await fetch("/api/plan-requests", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: requestId,
+          status: "rejected",
+          raspuns: "Respins",
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Planul a fost respins cu succes");
+        fetchPlanRequests();
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || "Eroare la respingerea planului");
+      }
+    } catch (error) {
+      console.error("Eroare la respingerea planului:", error);
+      toast.error("Eroare la respingerea planului");
+    } finally {
+      setSending(false);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const variants = {
       pending: "secondary",
       in_progress: "default",
       completed: "outline",
+      rejected: "destructive",
     } as const;
 
     const labels = {
       pending: "În așteptare",
       in_progress: "În lucru",
       completed: "Finalizat",
+      rejected: "Respins",
     };
 
     return (
@@ -188,6 +221,9 @@ export default function PlanRequestsPage() {
   const completedRequests = planRequests.filter(
     (req) => req.status === "completed"
   );
+  const rejectedRequests = planRequests.filter(
+    (req) => req.status === "rejected"
+  );
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -209,6 +245,9 @@ export default function PlanRequestsPage() {
             </TabsTrigger>
             <TabsTrigger value="completed">
               Finalizate ({completedRequests.length})
+            </TabsTrigger>
+            <TabsTrigger value="rejected">
+              Respinse ({rejectedRequests.length})
             </TabsTrigger>
           </TabsList>
 
@@ -247,7 +286,7 @@ export default function PlanRequestsPage() {
                               )}
                             </span>
                           </div>
-                          <div className="mt-2 p-3 bg-muted rounded-md">
+                          <div className="mt-2 p-3 mr-5 bg-muted rounded-md">
                             <p className="text-sm">{request.mesaj}</p>
                           </div>
                         </div>
@@ -265,15 +304,12 @@ export default function PlanRequestsPage() {
                           Acceptă
                         </Button>
                         <Button
-                          variant="default"
+                          variant="destructive"
                           size="sm"
-                          onClick={() => {
-                            setSelectedRequest(request);
-                            setPlanDialogOpen(true);
-                          }}
+                          onClick={() => rejectPlan(request._id)}
                         >
-                          <IconSend className="h-4 w-4 mr-1" />
-                          Trimite Plan
+                          <IconX className="h-4 w-4 mr-1" />
+                          Respinge Plan
                         </Button>
                       </div>
                     </div>
@@ -320,7 +356,7 @@ export default function PlanRequestsPage() {
                               )}
                             </span>
                           </div>
-                          <div className="mt-2 p-3 bg-muted rounded-md">
+                          <div className="mt-2 p-3 mr-5 bg-muted rounded-md">
                             <p className="text-sm">{request.mesaj}</p>
                           </div>
                         </div>
@@ -384,7 +420,7 @@ export default function PlanRequestsPage() {
                               )}
                             </span>
                           </div>
-                          <div className="mt-2 p-3 bg-muted rounded-md">
+                          <div className="mt-2 p-3 mr-5 bg-muted rounded-md">
                             <p className="text-sm">{request.mesaj}</p>
                           </div>
                         </div>
@@ -404,6 +440,63 @@ export default function PlanRequestsPage() {
               <div className="text-center p-8 bg-muted rounded-md">
                 <p className="text-muted-foreground">
                   Nu există cereri finalizate
+                </p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="rejected" className="space-y-4 mt-6">
+            {rejectedRequests.length > 0 ? (
+              rejectedRequests.map((request) => (
+                <Card key={request._id}>
+                  <CardContent className="p-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between">
+                      <div className="flex items-start space-x-4">
+                        <Avatar className="h-12 w-12">
+                          <AvatarFallback>
+                            {request.membru.nume.substring(0, 2)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <h4 className="font-semibold">
+                            {request.membru.nume}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">
+                            {getPlanTypeText(request.tipPlan)}
+                          </p>
+                          <div className="flex items-center mt-1 text-sm text-muted-foreground">
+                            <IconCalendar className="h-4 w-4 mr-1" />
+                            <span>
+                              Respins:{" "}
+                              {format(
+                                new Date(request.dataRaspunsului!),
+                                "d MMMM yyyy",
+                                {
+                                  locale: ro,
+                                }
+                              )}
+                            </span>
+                          </div>
+                          <div className="mt-2 p-3 mr-5 bg-muted rounded-md">
+                            <p className="text-sm">{request.mesaj}</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-4 md:mt-0 flex items-center space-x-2">
+                        {getStatusBadge(request.status)}
+                        <Badge variant="destructive">
+                          <IconX className="h-3 w-3 mr-1" />
+                          Plan respins
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <div className="text-center p-8 bg-muted rounded-md">
+                <p className="text-muted-foreground">
+                  Nu există cereri respinse
                 </p>
               </div>
             )}

@@ -38,7 +38,7 @@ const planRequestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "in_progress", "completed"],
+    enum: ["pending", "in_progress", "completed", "rejected"],
     default: "pending",
   },
   raspuns: {
@@ -56,4 +56,8 @@ const planRequestSchema = new mongoose.Schema({
   timestamps: true
 });
 
-export default mongoose.models.PlanRequest || mongoose.model("PlanRequest", planRequestSchema);
+if (mongoose.models.PlanRequest) {
+  delete mongoose.models.PlanRequest;
+}
+
+export default mongoose.model("PlanRequest", planRequestSchema);

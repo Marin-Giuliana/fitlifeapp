@@ -611,7 +611,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Durată:</span>
-                    <span>75 minute</span>
+                    <span>60 minute</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Nivel:</span>
@@ -646,7 +646,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Durată:</span>
-                    <span>45 minute</span>
+                    <span>60 minute</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Nivel:</span>
@@ -681,7 +681,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Durată:</span>
-                    <span>50 minute</span>
+                    <span>60 minute</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Nivel:</span>
@@ -751,7 +751,7 @@ export default function LandingPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Durată:</span>
-                    <span>55 minute</span>
+                    <span>60 minute</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Nivel:</span>
